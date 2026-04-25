@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BZR — 전략적 점성술 인텔리전스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060607;
+    --bg2: #0a0a0b;
+    --bg3: #0e0e10;
+    --line: #171719;
+    --line2: #222226;
+    --dim: #2e2e33;
+    --mid: #55555e;
+    --text: #c8c4bc;
+    --bright: #e6e2d8;
+    --accent: #a89878;
+    --mono: 'Share Tech Mono', monospace;
+    --serif: 'IM Fell English', 'Georgia', serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── SCANLINE ── */
+  body::after {
+    content: '';
+    position: fixed;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(transparent 0%, var(--line2) 50%, transparent 100%);
+    animation: scan 9s linear infinite;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.5;
+  }
+  @keyframes scan { 0%{top:-3px} 100%{top:100vh} }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 18px clamp(24px, 7vw, 110px);
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 1000;
+    background: rgba(6,6,7,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 22px; font-weight: 400;
+    color: var(--bright); letter-spacing: 0.04em;
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    font-size: 10px; letter-spacing: 0.22em;
+    color: var(--dim); text-decoration: none;
+    text-transform: uppercase; transition: color 0.3s;
+    cursor: crosshair;
+  }
+  .nav-links a:hover { color: var(--mid); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    padding: 140px clamp(24px, 7vw, 110px) 80px;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+  }
+  .hero-tag {
+    font-size: 10px; letter-spacing: 0.3em;
+    color: var(--dim); margin-bottom: 52px;
+    opacity: 0; animation: fadeUp 1s ease 0.2s forwards;
+  }
+  .hero-h1 {
+    font-family: var(--serif);
+    font-size: clamp(44px, 7.5vw, 104px);
+    font-weight: 400; line-height: 1.06;
+    color: var(--bright); letter-spacing: -0.02em;
+    margin-bottom: 28px;
+    opacity: 0; animation: fadeUp 1s ease 0.4s forwards;
+  }
+  .hero-h1 em { font-style: italic; color: var(--accent); }
+  .hero-rule {
+    width: 36px; height: 1px; background: var(--line2);
+    margin: 36px 0;
+    opacity: 0; animation: fadeUp 1s ease 0.55s forwards;
+  }
+  .hero-sub {
+    font-size: 12px; color: var(--mid);
+    line-height: 2.1; letter-spacing: 0.07em;
+    max-width: 400px; margin-bottom: 60px;
+    opacity: 0; animation: fadeUp 1s ease 0.65s forwards;
+  }
+  .hero-cta {
+    opacity: 0; animation: fadeUp 1s ease 0.8s forwards;
+  }
+  .btn {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid var(--line2);
+    color: var(--mid);
+    padding: 14px 40px;
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; text-decoration: none;
+    cursor: crosshair; transition: all 0.3s;
+  }
+  .btn:hover { border-color: var(--mid); color: var(--bright); background: var(--bg2); }
+
+  .hero-coords {
+    position: absolute;
+    right: clamp(24px, 7vw, 110px); bottom: 72px;
+    text-align: right;
+    opacity: 0; animation: fadeUp 1s ease 1s forwards;
+  }
+  .hero-coords p { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); line-height: 2; }
+
+  .hero-scroll {
+    position: absolute;
+    left: clamp(24px, 7vw, 110px); bottom: 72px;
+    opacity: 0; animation: fadeUp 1s ease 1s forwards;
+  }
+  .hero-scroll p { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 11px 0;
+    background: var(--bg);
+  }
+  .ticker-track {
+    display: flex; gap: 56px; white-space: nowrap;
+    width: max-content;
+    animation: ticker 24s linear infinite;
+  }
+  .ticker-track span {
+    font-size: 11px; letter-spacing: 0.16em; color: var(--dim);
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── INPUT FLOW ── */
+  #input-flow {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 80px clamp(24px, 7vw, 110px);
+    border-top: 1px solid var(--line);
+  }
+  .form-inner { width: 100%; max-width: 620px; }
+
+  .step-bars { display: flex; gap: 8px; margin-bottom: 72px; }
+  .step-bar {
+    height: 1px; flex: 1;
+    background: var(--line);
+    transition: background 0.5s;
+  }
+  .step-bar.done { background: var(--mid); }
+  .step-bar.active { background: var(--accent); }
+
+  .form-tag {
+    font-size: 10px; letter-spacing: 0.28em;
+    color: var(--dim); margin-bottom: 52px;
+    min-height: 16px;
+  }
+  .form-label {
+    display: block; font-size: 11px;
+    letter-spacing: 0.2em; color: var(--mid);
+    margin-bottom: 18px; text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%; background: transparent;
+    border: none; border-bottom: 1px solid var(--line2);
+    color: var(--bright);
+    font-family: var(--serif); font-size: clamp(28px, 4.5vw, 56px);
+    font-weight: 400; padding: 14px 0;
+    outline: none; letter-spacing: -0.01em;
+    transition: border-color 0.3s;
+    caret-color: var(--accent);
+  }
+  .form-input:focus { border-bottom-color: var(--mid); }
+  .form-input::placeholder { color: var(--line2); }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.25); cursor: crosshair; }
+
+  .form-actions {
+    margin-top: 52px; display: flex;
+    align-items: center; gap: 28px;
+  }
+  .form-skip {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--line2); cursor: crosshair;
+    transition: color 0.3s; background: none;
+    border: none; font-family: var(--mono);
+    text-transform: uppercase;
+  }
+  .form-skip:hover { color: var(--dim); }
+
+  /* scanning state */
+  .scanning { display: none; }
+  .scanning.active { display: block; }
+  .scanning-row { margin-bottom: 20px; }
+  .scanning-row .s-key { font-size: 11px; letter-spacing: 0.2em; color: var(--dim); margin-right: 18px; }
+  .scanning-row .s-val { font-family: var(--serif); font-size: 20px; color: var(--mid); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .blink { animation: blink 1s infinite; }
+
+  /* completed */
+  .form-done { display: none; }
+  .form-done.active { display: block; animation: fadeUp 0.7s ease; }
+
+  /* ── LOGIC ── */
+  #logic {
+    padding: 120px clamp(24px, 7vw, 110px);
+    border-top: 1px solid var(--line);
+  }
+  .logic-tag {
+    font-size: 10px; letter-spacing: 0.3em;
+    color: var(--dim); margin-bottom: 68px;
+  }
+  .logic-h2 {
+    font-family: var(--serif);
+    font-size: clamp(30px, 4.5vw, 60px);
+    font-weight: 400; color: var(--bright);
+    line-height: 1.14; max-width: 600px;
+    margin-bottom: 96px; letter-spacing: -0.02em;
+  }
+  .logic-h2 em { font-style: italic; color: var(--mid); }
+
+  .logic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px; background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 80px;
+  }
+  .logic-card {
+    background: var(--bg);
+    padding: 48px 40px;
+    transition: background 0.3s;
+  }
+  .logic-card:hover { background: var(--bg2); }
+  .logic-num {
+    font-size: 10px; letter-spacing: 0.3em;
+    color: var(--line2); margin-bottom: 36px;
+  }
+  .logic-title {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 400;
+    color: var(--accent); margin-bottom: 20px;
+    line-height: 1.35;
+  }
+  .logic-body {
+    font-size: 12px; color: var(--dim);
+    line-height: 2.1;
+  }
+
+  .logic-formula {
+    border-top: 1px solid var(--line);
+    padding-top: 40px;
+  }
+  .logic-formula p {
+    font-size: 11px; color: var(--line2);
+    letter-spacing: 0.12em; line-height: 2.2;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 64px clamp(24px, 7vw, 110px);
+  }
+  .footer-inner {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; flex-wrap: wrap; gap: 44px;
+  }
+  .footer-logo {
+    font-family: var(--serif); font-size: 28px;
+    color: var(--dim); margin-bottom: 28px;
+  }
+  .footer-info {
+    font-size: 11px; color: var(--dim);
+    line-height: 2.2; letter-spacing: 0.06em;
+  }
+  .footer-right { text-align: right; }
+  .footer-yt {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 0.2em;
+    color: var(--dim); text-decoration: none;
+    text-transform: uppercase;
+    margin-bottom: 20px; transition: color 0.3s;
+  }
+  .footer-yt:hover { color: var(--mid); }
+  .footer-copy {
+    font-size: 10px; color: var(--line2);
+    letter-spacing: 0.15em;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">BZR</a>
+  <div class="nav-links">
+    <a href="#input-flow">분석 시작</a>
+    <a href="#logic">엔진 구조</a>
+    <a href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">유튜브</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <p class="hero-tag">BZR / ASTROLOGICAL INTELLIGENCE SYSTEM v1.0</p>
+  <h1 class="hero-h1">
+    데이터로<br>
+    <em>납득하는</em><br>
+    전략적 점성술
+  </h1>
+  <div class="hero-rule"></div>
+  <p class="hero-sub">
+    감성이 아닌 수학.<br>
+    직감이 아닌 구조.<br>
+    IQ 151의 분석 엔진이 당신의 차트를 해킹합니다.
+  </p>
+  <div class="hero-cta">
+    <a href="#input-flow" class="btn">분석 시작 →</a>
+  </div>
+  <div class="hero-coords">
+    <p>37.5665° N / 126.9780° E</p>
+    <p>KERNEL ACTIVE</p>
+  </div>
+  <div class="hero-scroll"><p>SCROLL ↓</p></div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap" id="ticker1">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- INPUT FLOW -->
+<section id="input-flow">
+  <div class="form-inner">
+
+    <!-- Progress bars -->
+    <div class="step-bars" id="stepBars">
+      <div class="step-bar active" id="bar0"></div>
+      <div class="step-bar" id="bar1"></div>
+      <div class="step-bar" id="bar2"></div>
+      <div class="step-bar" id="bar3"></div>
+    </div>
+
+    <!-- Normal input state -->
+    <div id="formState">
+      <p class="form-tag" id="formTag">INPUT 1/4 / 분석 대상 초기화 중...</p>
+      <label class="form-label" id="formLabel">식별자</label>
+      <input class="form-input" id="formInput" type="text" placeholder="성명을 입력하세요" autocomplete="off">
+      <div class="form-actions">
+        <button class="btn" id="nextBtn" onclick="advance()">다음 →</button>
+        <button class="form-skip" id="skipBtn" style="display:none" onclick="advance(true)">건너뛰기 (Enter)</button>
+      </div>
+    </div>
+
+    <!-- Scanning state -->
+    <div class="scanning" id="scanState">
+      <p class="form-tag blink">▌ 차트 파싱 중...</p>
+      <div class="scanning-row"><span class="s-key">NAME</span><span class="s-val" id="sv-name">—</span></div>
+      <div class="scanning-row"><span class="s-key">BIRTH</span><span class="s-val" id="sv-birth">—</span></div>
+      <div class="scanning-row"><span class="s-key">TIME</span><span class="s-val" id="sv-time">—</span></div>
+      <div class="scanning-row"><span class="s-key">CITY</span><span class="s-val" id="sv-city">—</span></div>
+    </div>
+
+    <!-- Done state -->
+    <div class="form-done" id="doneState">
+      <p class="form-tag">분석 완료 / ANALYSIS COMPLETE</p>
+      <h2 style="font-family:var(--serif);font-size:clamp(28px,4vw,52px);font-weight:400;color:var(--bright);line-height:1.2;margin-bottom:24px;">
+        <span id="doneName"></span>님의 차트가<br>파싱되었습니다.
+      </h2>
+      <p style="font-size:12px;color:var(--dim);line-height:2.1;">
+        결과 보고서는 준비되는 즉시<br>개인적으로 전달됩니다.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- LOGIC -->
+<section id="logic">
+  <p class="logic-tag">SYSTEM ARCHITECTURE / 분석 엔진 구조</p>
+  <h2 class="logic-h2">
+    IQ 151의 엔진이<br>
+    당신의 차트를<br>
+    <em>어떻게 해킹하는가</em>
+  </h2>
+
+  <div class="logic-grid">
+    <div class="logic-card">
+      <p class="logic-num">01</p>
+      <h3 class="logic-title">출생 차트 구조 분석</h3>
+      <p class="logic-body">행성의 위치, 하우스 배치, 어스펙트 각도를 수학적으로 파싱합니다. 감이 아닌 0.1도 단위의 정밀 계산입니다.</p>
+    </div>
+    <div class="logic-card">
+      <p class="logic-num">02</p>
+      <h3 class="logic-title">패턴 식별 엔진</h3>
+      <p class="logic-body">수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다. 통계적으로 유의미한 배치만 보고합니다.</p>
+    </div>
+    <div class="logic-card">
+      <p class="logic-num">03</p>
+      <h3 class="logic-title">전략 변수 도출</h3>
+      <p class="logic-body">에너지 피크 주기, 의사결정 최적 타이밍, 관계 역학 구조를 수치화된 전략 보고서로 출력합니다.</p>
+    </div>
+  </div>
+
+  <div class="logic-formula">
+    <p>
+      ASC = arctan(cos(ε)·sin(RAMC) / (cos(RAMC)·sin(φ) − tan(δ)·cos(φ)))<br>
+      MC  = arctan(tan(RAMC) / cos(ε)) &nbsp;|&nbsp; BIAS: NONE &nbsp;|&nbsp; METHOD: PLACIDUS
+    </p>
+  </div>
+</section>
+
+<!-- TICKER 2 -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack2"></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <p class="footer-logo">BZR</p>
+      <p class="footer-info">
+        상호: BZR ASTROLOGICAL LAB<br>
+        사업자등록번호: 000-00-00000<br>
+        통신판매업: 제 0000-서울-00000호<br>
+        대표: 버프가이 &nbsp;|&nbsp; contact@bzr.kr
+      </p>
+    </div>
+    <div class="footer-right">
+      <a class="footer-yt" href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">
+        YOUTUBE / 버프가이 ↗
+      </a>
+      <p class="footer-copy">© 2025 BZR ALL RIGHTS RESERVED</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── TICKER SETUP ──────────────────────────────────────────────────────────────
+const TICKER_ITEMS = [
+  "// ASC 계산 완료","// 목성 합 상승점 감지","// 토성 리턴 분석 중",
+  "// 12하우스 스텔리엄 확인","// N.Node 역행 패턴","// 카이런 궁위 처리 중",
+  "// MC-IC 축 최적화","// 일식 트랜짓 대입 완료","// 드래곤 헤드 계산",
+  "// 달 위상 사이클 매핑","// 하우스 커스프 정렬"
+];
+function buildTicker(id) {
+  const el = document.getElementById(id);
+  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  el.innerHTML = doubled.map(t => `<span>${t}</span>`).join('');
+}
+buildTicker('tickerTrack');
+buildTicker('tickerTrack2');
+
+// ── FORM LOGIC ────────────────────────────────────────────────────────────────
+const STEPS = [
+  { id:"name",  label:"식별자",    placeholder:"성명을 입력하세요",    type:"text", hint:"분석 대상 초기화 중...", skippable:false },
+  { id:"birth", label:"출생 데이터", placeholder:"YYYY-MM-DD",        type:"date", hint:"항성력 데이터베이스 조회 중...", skippable:false },
+  { id:"time",  label:"출생 시각",  placeholder:"HH:MM (모르면 건너뛰기)", type:"time", hint:"천구 좌표 계산 중...", skippable:true },
+  { id:"city",  label:"출생지",    placeholder:"도시명 (예: Seoul)",  type:"text", hint:"지리 좌표 매핑 중...", skippable:false },
+];
+
+let currentStep = 0;
+const formData = { name:"", birth:"", time:"", city:"" };
+
+const formInput  = document.getElementById('formInput');
+const formTag    = document.getElementById('formTag');
+const formLabel  = document.getElementById('formLabel');
+const nextBtn    = document.getElementById('nextBtn');
+const skipBtn    = document.getElementById('skipBtn');
+const formState  = document.getElementById('formState');
+const scanState  = document.getElementById('scanState');
+const doneState  = document.getElementById('doneState');
+
+formInput.addEventListener('keydown', e => { if (e.key === 'Enter') advance(); });
+
+function updateBars() {
+  STEPS.forEach((_, i) => {
+    const bar = document.getElementById('bar' + i);
+    bar.className = 'step-bar' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+  });
+}
+
+function renderStep() {
+  const s = STEPS[currentStep];
+  formTag.textContent = `INPUT ${currentStep+1}/4 / ${s.hint}`;
+  formLabel.textContent = s.label;
+  formInput.type = s.type;
+  formInput.placeholder = s.placeholder;
+  formInput.value = '';
+  skipBtn.style.display = s.skippable ? 'inline-block' : 'none';
+  nextBtn.textContent = currentStep < STEPS.length - 1 ? '다음 →' : '분석 실행 →';
+  updateBars();
+  setTimeout(() => formInput.focus(), 50);
+}
+
+function advance(skip = false) {
+  const val = skip ? '' : formInput.value.trim();
+  const s = STEPS[currentStep];
+  if (!val && !s.skippable && !skip) return;
+
+  formData[s.id] = val;
+
+  // Animate out
+  formState.style.opacity = '0';
+  formState.style.transform = 'translateY(-10px)';
+  formState.style.transition = 'opacity 0.3s, transform 0.3s';
+
+  setTimeout(() => {
+    formState.style.opacity = '1';
+    formState.style.transform = 'translateY(0)';
+    if (currentStep < STEPS.length - 1) {
+      currentStep++;
+      renderStep();
+    } else {
+      showScanning();
+    }
+  }, 300);
+}
+
+function showScanning() {
+  formState.style.display = 'none';
+  scanState.classList.add('active');
+  document.getElementById('sv-name').textContent  = formData.name  || '—';
+  document.getElementById('sv-birth').textContent = formData.birth || '—';
+  document.getElementById('sv-time').textContent  = formData.time  || '미입력';
+  document.getElementById('sv-city').textContent  = formData.city  || '—';
+
+  // API 연동 준비: handleFormSubmit 호출
+  handleFormSubmit(formData);
+
+  setTimeout(() => {
+    scanState.classList.remove('active');
+    doneState.classList.add('active');
+    document.getElementById('doneName').textContent = formData.name || '분석 대상';
+  }, 2800);
+}
+
+// ── API BRIDGE — Gemini + Make.com 연동 준비 완료 ─────────────────────────────
+async function handleFormSubmit(data) {
+  const payload = {
+    name:      data.name,
+    birthDate: data.birth,
+    birthTime: data.time || null,
+    birthCity: data.city,
+    timestamp: new Date().toISOString(),
+    source:    'BZR_landing_v1',
+  };
+  console.log('[BZR] Payload ready for API:', payload);
+
+  // TODO: 아래 주석 해제 후 URL 교체
+  // const MAKE_WEBHOOK = 'https://hook.eu1.make.com/YOUR_WEBHOOK_ID';
+  // await fetch(MAKE_WEBHOOK, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(payload),
+  // });
+
+  return payload;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderStep();
+</script>
+</body>
+</html>
