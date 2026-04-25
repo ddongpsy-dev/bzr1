@@ -1,0 +1,506 @@
+import { useState, useEffect, useRef } from "react";
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const STEPS = [
+  { id: "name",     label: "식별자",     placeholder: "성명을 입력하세요",        type: "text",   hint: "분석 대상 초기화 중..." },
+  { id: "birth",    label: "출생 데이터", placeholder: "YYYY-MM-DD",              type: "date",   hint: "항성력 데이터베이스 조회 중..." },
+  { id: "time",     label: "출생 시각",  placeholder: "HH:MM (모르면 공백)",      type: "time",   hint: "천구 좌표 계산 중..." },
+  { id: "city",     label: "출생지",     placeholder: "도시명 (예: Seoul)",       type: "text",   hint: "지리 좌표 매핑 중..." },
+];
+
+const LOGIC_CARDS = [
+  {
+    number: "01",
+    title: "출생 차트 구조 분석",
+    body: "행성의 위치, 하우스 배치, 어스펙트 각도를 수학적으로 파싱합니다. 감이 아닌 0.1도 단위의 정밀 계산입니다.",
+  },
+  {
+    number: "02",
+    title: "패턴 식별 엔진",
+    body: "수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다. 통계적으로 유의미한 배치만 보고합니다.",
+  },
+  {
+    number: "03",
+    title: "전략 변수 도출",
+    body: "당신의 에너지 피크 주기, 의사결정 최적 타이밍, 관계 역학 구조를 수치화된 전략 보고서로 출력합니다.",
+  },
+];
+
+// ─── HANDLE FORM SUBMIT — API 연동 준비 완료 ──────────────────────────────────
+async function handleFormSubmit(formData) {
+  // TODO: Gemini API + Make.com webhook 연결
+  // const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/YOUR_WEBHOOK_ID";
+  // const GEMINI_API_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+
+  const payload = {
+    name:      formData.name,
+    birthDate: formData.birth,
+    birthTime: formData.time || null,
+    birthCity: formData.city,
+    timestamp: new Date().toISOString(),
+    source:    "BZR_landing_v1",
+  };
+
+  console.log("[BZR] Form payload ready for API:", payload);
+
+  // 실제 연동 시 아래 주석 해제:
+  // await fetch(MAKE_WEBHOOK_URL, {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify(payload),
+  // });
+
+  return payload;
+}
+
+// ─── NOISE CANVAS BACKGROUND ─────────────────────────────────────────────────
+function NoiseCanvas() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width = window.innerWidth;
+    const H = canvas.height = window.innerHeight;
+    const imageData = ctx.createImageData(W, H);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const v = Math.random() * 18 | 0;
+      imageData.data[i] = v; imageData.data[i+1] = v; imageData.data[i+2] = v;
+      imageData.data[i+3] = 28;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }, []);
+  return (
+    <canvas
+      ref={ref}
+      style={{
+        position: "fixed", inset: 0, width: "100%", height: "100%",
+        pointerEvents: "none", zIndex: 0, opacity: 0.5,
+      }}
+    />
+  );
+}
+
+// ─── SCAN LINE ────────────────────────────────────────────────────────────────
+const scanAnim = `@keyframes scan { 0%{top:-2px} 100%{top:100%} }`;
+
+// ─── TICKER ───────────────────────────────────────────────────────────────────
+const TICKER_ITEMS = [
+  "ASC 계산 완료", "목성 합 상승점 감지", "토성 리턴 분석 중", "12하우스 스텔리엄 확인",
+  "N.Node 역행 패턴", "카이런 궁위 처리 중", "MC-IC 축 최적화", "일식 트랜짓 대입 완료",
+];
+
+function Ticker() {
+  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  return (
+    <div style={{
+      overflow: "hidden", borderTop: "1px solid #1e1e1e",
+      borderBottom: "1px solid #1e1e1e", padding: "10px 0",
+      background: "#080808",
+    }}>
+      <style>{`@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }`}</style>
+      <div style={{
+        display: "flex", gap: "60px", whiteSpace: "nowrap",
+        animation: "ticker 22s linear infinite",
+        width: "max-content",
+      }}>
+        {doubled.map((t, i) => (
+          <span key={i} style={{ fontSize: "11px", letterSpacing: "0.18em", color: "#3a3a3a", fontFamily: "'Courier New', monospace" }}>
+            {`// ${t}`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── HERO SECTION ─────────────────────────────────────────────────────────────
+function HeroSection({ onStart }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { setTimeout(() => setVisible(true), 100); }, []);
+
+  return (
+    <section style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      justifyContent: "center", alignItems: "flex-start",
+      padding: "0 clamp(24px, 8vw, 120px)",
+      position: "relative", zIndex: 1,
+    }}>
+      <style>{`
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .bzr-btn { background:transparent; border:1px solid #2a2a2a; color:#888; padding:14px 36px;
+          font-family:'Courier New',monospace; font-size:11px; letter-spacing:0.2em;
+          cursor:pointer; transition:all 0.3s; text-transform:uppercase; }
+        .bzr-btn:hover { border-color:#888; color:#e8e8e8; background:#111; }
+        .bzr-label { font-family:'Courier New',monospace; font-size:10px; letter-spacing:0.3em; color:#3a3a3a; }
+      `}</style>
+
+      {/* 브랜드 */}
+      <div style={{ opacity: visible ? 1 : 0, animation: visible ? "fadeUp 0.9s ease forwards" : "none" }}>
+        <p className="bzr-label" style={{ marginBottom: "48px" }}>BZR / ASTROLOGICAL INTELLIGENCE SYSTEM v1.0</p>
+        <h1 style={{
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          fontSize: "clamp(40px, 7vw, 96px)",
+          fontWeight: 300, lineHeight: 1.08,
+          color: "#e8e4dc", letterSpacing: "-0.02em",
+          margin: "0 0 24px",
+        }}>
+          데이터로<br />
+          <em style={{ fontStyle: "italic", color: "#c8c0b0" }}>납득하는</em><br />
+          전략적 점성술
+        </h1>
+
+        <div style={{ width: "40px", height: "1px", background: "#2a2a2a", margin: "32px 0" }} />
+
+        <p style={{
+          fontFamily: "'Courier New', monospace", fontSize: "12px",
+          color: "#4a4a4a", lineHeight: 2, letterSpacing: "0.08em",
+          maxWidth: "420px", marginBottom: "56px",
+        }}>
+          감성이 아닌 수학.<br />
+          직감이 아닌 구조.<br />
+          IQ 151의 분석 엔진이 당신의 차트를 해킹합니다.
+        </p>
+
+        <button className="bzr-btn" onClick={onStart}>
+          분석 시작 →
+        </button>
+      </div>
+
+      {/* 우측 좌표 */}
+      <div style={{
+        position: "absolute", right: "clamp(24px, 8vw, 120px)", bottom: "80px",
+        textAlign: "right",
+      }}>
+        <p className="bzr-label">37.5665° N / 126.9780° E</p>
+        <p className="bzr-label" style={{ marginTop: "8px" }}>KERNEL ACTIVE</p>
+      </div>
+
+      {/* 스크롤 표시 */}
+      <div style={{ position: "absolute", left: "clamp(24px, 8vw, 120px)", bottom: "80px" }}>
+        <p className="bzr-label">SCROLL ↓</p>
+      </div>
+    </section>
+  );
+}
+
+// ─── INPUT FLOW SECTION ───────────────────────────────────────────────────────
+function InputFlow({ onComplete }) {
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState({ name: "", birth: "", time: "", city: "" });
+  const [animating, setAnimating] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [currentVal, setCurrentVal] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, [step]);
+
+  const currentStep = STEPS[step];
+
+  const advance = async () => {
+    if (!currentVal.trim() && currentStep.id !== "time") return;
+    const updated = { ...formData, [currentStep.id]: currentVal };
+    setFormData(updated);
+    setAnimating(true);
+    setTimeout(() => {
+      if (step < STEPS.length - 1) {
+        setStep(s => s + 1);
+        setCurrentVal("");
+        setAnimating(false);
+      } else {
+        setScanning(true);
+        handleFormSubmit(updated).then(() => {
+          setTimeout(() => { setScanning(false); setSubmitted(true); }, 2400);
+        });
+      }
+    }, 350);
+  };
+
+  const handleKey = (e) => { if (e.key === "Enter") advance(); };
+
+  return (
+    <section id="input-flow" style={{
+      minHeight: "100vh", display: "flex", alignItems: "center",
+      justifyContent: "center", padding: "80px clamp(24px, 8vw, 120px)",
+      position: "relative", zIndex: 1,
+    }}>
+      <style>{`
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes glitch { 0%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)} 100%{transform:translateX(0)} }
+        .bzr-input { background:transparent; border:none; border-bottom:1px solid #2a2a2a;
+          color:#e8e4dc; font-size:clamp(28px,4vw,52px); font-family:'Georgia',serif;
+          font-weight:300; padding:16px 0; width:100%; outline:none; letter-spacing:-0.01em;
+          transition:border-color 0.3s; }
+        .bzr-input:focus { border-bottom-color:#888; }
+        .bzr-input::placeholder { color:#2a2a2a; }
+      `}</style>
+
+      <div style={{ width: "100%", maxWidth: "640px" }}>
+
+        {/* 진행 표시 */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "64px" }}>
+          {STEPS.map((s, i) => (
+            <div key={s.id} style={{
+              height: "1px", flex: 1,
+              background: i <= step ? "#888" : "#1e1e1e",
+              transition: "background 0.4s",
+            }} />
+          ))}
+        </div>
+
+        {submitted ? (
+          <div style={{ animation: "slideIn 0.6s ease" }}>
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", letterSpacing: "0.3em", color: "#3a3a3a", marginBottom: "32px" }}>
+              분석 완료 / ANALYSIS COMPLETE
+            </p>
+            <h2 style={{ fontFamily: "'Georgia',serif", fontSize: "clamp(28px,4vw,52px)", fontWeight: 300, color: "#e8e4dc", lineHeight: 1.2, marginBottom: "24px" }}>
+              {formData.name}님의 차트가<br />파싱되었습니다.
+            </h2>
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "12px", color: "#4a4a4a", lineHeight: 2 }}>
+              결과 보고서는 준비되는 즉시<br />개인적으로 전달됩니다.
+            </p>
+          </div>
+        ) : scanning ? (
+          <div>
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", letterSpacing: "0.3em", color: "#888", marginBottom: "32px", animation: "blink 1s infinite" }}>
+              ▌ 처리 중...
+            </p>
+            {STEPS.map((s, i) => (
+              <div key={s.id} style={{ marginBottom: "16px", animation: `glitch ${0.3 + i * 0.15}s ease infinite` }}>
+                <span style={{ fontFamily: "'Courier New',monospace", fontSize: "11px", color: "#3a3a3a", marginRight: "16px" }}>{s.id.toUpperCase()}</span>
+                <span style={{ fontFamily: "'Georgia',serif", fontSize: "18px", color: "#888" }}>{formData[s.id] || "—"}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ opacity: animating ? 0 : 1, transition: "opacity 0.3s" }}>
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", letterSpacing: "0.3em", color: "#3a3a3a", marginBottom: "48px" }}>
+              INPUT {step + 1}/{STEPS.length} / {currentStep.hint}
+            </p>
+
+            <label style={{ fontFamily: "'Courier New',monospace", fontSize: "11px", letterSpacing: "0.2em", color: "#4a4a4a", display: "block", marginBottom: "16px" }}>
+              {currentStep.label}
+            </label>
+
+            <input
+              ref={inputRef}
+              className="bzr-input"
+              type={currentStep.type}
+              placeholder={currentStep.placeholder}
+              value={currentVal}
+              onChange={e => setCurrentVal(e.target.value)}
+              onKeyDown={handleKey}
+            />
+
+            <div style={{ marginTop: "48px", display: "flex", alignItems: "center", gap: "24px" }}>
+              <button
+                onClick={advance}
+                style={{
+                  background: "transparent", border: "1px solid #2a2a2a",
+                  color: "#888", padding: "12px 32px",
+                  fontFamily: "'Courier New',monospace", fontSize: "11px",
+                  letterSpacing: "0.2em", cursor: "pointer",
+                  transition: "all 0.3s", textTransform: "uppercase",
+                }}
+                onMouseEnter={e => { e.target.style.borderColor="#888"; e.target.style.color="#e8e4dc"; }}
+                onMouseLeave={e => { e.target.style.borderColor="#2a2a2a"; e.target.style.color="#888"; }}
+              >
+                {step < STEPS.length - 1 ? "다음 →" : "분석 실행 →"}
+              </button>
+              {currentStep.id === "time" && (
+                <span style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", color: "#2a2a2a" }}>
+                  ENTER를 눌러 건너뛰기
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── LOGIC SECTION ────────────────────────────────────────────────────────────
+function LogicSection() {
+  return (
+    <section style={{
+      padding: "120px clamp(24px, 8vw, 120px)",
+      borderTop: "1px solid #111",
+      position: "relative", zIndex: 1,
+    }}>
+      <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", letterSpacing: "0.3em", color: "#3a3a3a", marginBottom: "64px" }}>
+        SYSTEM ARCHITECTURE / 분석 엔진 구조
+      </p>
+
+      <h2 style={{
+        fontFamily: "'Georgia',serif",
+        fontSize: "clamp(28px, 4vw, 56px)",
+        fontWeight: 300, color: "#e8e4dc",
+        lineHeight: 1.15, maxWidth: "640px",
+        marginBottom: "96px", letterSpacing: "-0.02em",
+      }}>
+        IQ 151의 엔진이<br />
+        당신의 차트를<br />
+        <em style={{ fontStyle: "italic", color: "#888" }}>어떻게 해킹하는가</em>
+      </h2>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+        gap: "1px", background: "#111",
+        border: "1px solid #111",
+      }}>
+        {LOGIC_CARDS.map((card) => (
+          <div key={card.number} style={{
+            background: "#090909", padding: "48px 40px",
+            transition: "background 0.3s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background="#0d0d0d"}
+            onMouseLeave={e => e.currentTarget.style.background="#090909"}
+          >
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", letterSpacing: "0.3em", color: "#2a2a2a", marginBottom: "32px" }}>
+              {card.number}
+            </p>
+            <h3 style={{ fontFamily: "'Georgia',serif", fontSize: "20px", fontWeight: 300, color: "#c8c0b0", marginBottom: "20px", lineHeight: 1.3 }}>
+              {card.title}
+            </h3>
+            <p style={{ fontFamily: "'Courier New',monospace", fontSize: "12px", color: "#4a4a4a", lineHeight: 2 }}>
+              {card.body}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* 수식 장식 */}
+      <div style={{ marginTop: "80px", borderTop: "1px solid #111", paddingTop: "40px" }}>
+        <p style={{ fontFamily: "'Courier New',monospace", fontSize: "11px", color: "#2a2a2a", letterSpacing: "0.15em", lineHeight: 2 }}>
+          ASC = arctan(cos(ε)·sin(RAMC) / (cos(RAMC)·sin(φ) − tan(δ)·cos(φ)))<br />
+          MC  = arctan(tan(RAMC) / cos(ε)) &nbsp;|&nbsp; BIAS: NONE &nbsp;|&nbsp; METHOD: PLACIDUS
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── FOOTER ───────────────────────────────────────────────────────────────────
+function Footer() {
+  return (
+    <footer style={{
+      borderTop: "1px solid #111",
+      padding: "64px clamp(24px, 8vw, 120px)",
+      position: "relative", zIndex: 1,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "40px" }}>
+        <div>
+          <p style={{ fontFamily: "'Georgia',serif", fontSize: "24px", fontWeight: 300, color: "#3a3a3a", marginBottom: "24px" }}>BZR</p>
+          <p style={{ fontFamily: "'Courier New',monospace", fontSize: "11px", color: "#2a2a2a", lineHeight: 2 }}>
+            상호: BZR ASTROLOGICAL LAB<br />
+            사업자등록번호: 000-00-00000<br />
+            통신판매업: 제 0000-서울-00000호<br />
+            대표: 버프가이 &nbsp;|&nbsp; contact@bzr.kr
+          </p>
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <a
+            href="https://www.youtube.com/@버프가이"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: "'Courier New',monospace", fontSize: "11px",
+              letterSpacing: "0.2em", color: "#3a3a3a",
+              textDecoration: "none", display: "block",
+              marginBottom: "16px", transition: "color 0.3s",
+            }}
+            onMouseEnter={e => e.target.style.color="#888"}
+            onMouseLeave={e => e.target.style.color="#3a3a3a"}
+          >
+            YOUTUBE / 버프가이 ↗
+          </a>
+          <p style={{ fontFamily: "'Courier New',monospace", fontSize: "10px", color: "#1e1e1e" }}>
+            © 2025 BZR ALL RIGHTS RESERVED
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ─── ROOT APP ─────────────────────────────────────────────────────────────────
+export default function App() {
+  const inputRef = useRef(null);
+
+  const scrollToInput = () => {
+    document.getElementById("input-flow")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <div style={{
+      background: "#070707",
+      minHeight: "100vh",
+      color: "#e8e4dc",
+      position: "relative",
+      overflowX: "hidden",
+    }}>
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #070707; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.3); }
+        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.3); }
+        ${scanAnim}
+        @keyframes scanMove { 0%{top:-4px;opacity:0.6} 100%{top:100%;opacity:0} }
+      `}</style>
+
+      {/* 글로벌 스캔라인 효과 */}
+      <div style={{
+        position: "fixed", left: 0, right: 0, height: "2px",
+        background: "linear-gradient(transparent, #1e1e1e, transparent)",
+        animation: "scanMove 8s linear infinite",
+        pointerEvents: "none", zIndex: 10,
+      }} />
+
+      <NoiseCanvas />
+
+      {/* 네비게이션 */}
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0,
+        padding: "20px clamp(24px, 8vw, 120px)",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        zIndex: 100, background: "rgba(7,7,7,0.9)",
+        backdropFilter: "blur(8px)",
+        borderBottom: "1px solid #111",
+      }}>
+        <span style={{ fontFamily: "'Georgia',serif", fontSize: "18px", fontWeight: 300, color: "#e8e4dc", letterSpacing: "0.05em" }}>BZR</span>
+        <div style={{ display: "flex", gap: "32px" }}>
+          {["분석 시작", "엔진 구조", "유튜브"].map((item, i) => (
+            <button key={item} onClick={() => {
+              if (i === 0) scrollToInput();
+              else if (i === 1) document.querySelector("h2")?.scrollIntoView({ behavior: "smooth" });
+              else window.open("https://www.youtube.com/@버프가이", "_blank");
+            }} style={{
+              background: "transparent", border: "none",
+              fontFamily: "'Courier New',monospace", fontSize: "10px",
+              letterSpacing: "0.2em", color: "#3a3a3a",
+              cursor: "pointer", textTransform: "uppercase",
+              transition: "color 0.3s",
+            }}
+              onMouseEnter={e => e.target.style.color="#888"}
+              onMouseLeave={e => e.target.style.color="#3a3a3a"}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <HeroSection onStart={scrollToInput} />
+      <Ticker />
+      <InputFlow />
+      <LogicSection />
+      <Ticker />
+      <Footer />
+    </div>
+  );
+}
