@@ -9,145 +9,112 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════
-   기존 BZR 시스템의 모든 핵심 스타일 및 토큰 유지
+   BZR CORE UI TOKENS
 ═══════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --bg:        #000000; --bg-1: #080808; --bg-2: #0d0d0d; --bg-3: #111111;
-  --border:    #1a1a1a; --border-2: #242424; --border-3: #2e2e2e;
-  --white:     #f0f0f0; --cyan: #00f0ff; --cyan-dim: rgba(0,240,255,0.08);
-  --mute-1:    #666666; --mute-2: #4a4a4a; --mute-3: #333333;
-  --text-1:    #cccccc; --sans: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+  --bg: #000000; --bg-1: #080808; --bg-2: #0d0d0d;
+  --border: #1a1a1a; --border-2: #242424;
+  --white: #f0f0f0; --cyan: #00f0ff; --cyan-dim: rgba(0,240,255,0.08);
+  --text-1: #cccccc; --sans: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
 }
+body { background: var(--bg); color: var(--text-1); font-family: var(--sans); overflow-x: hidden; cursor: crosshair; -webkit-font-smoothing: antialiased; }
+body::after { content: ''; position: fixed; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: scanline 8s linear infinite; pointer-events: none; z-index: 9999; opacity: 0.15; }
+@keyframes scanline { 0%{top:-1px} 100%{top:100vh} }
 
-body { background: var(--bg); color: var(--text-1); font-family: var(--sans); overflow-x: hidden; cursor: crosshair; }
-body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,240,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.018) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
-body::after { content: ''; position: fixed; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: scanline 8s linear infinite; pointer-events: none; z-index: 9998; opacity: 0.15; }
-@keyframes scanline { 0%{top:-1px;opacity:0} 100%{top:100vh;opacity:0} }
-
-/* ─── 통합 입력 UI (BZR 에디션) ─── */
-#input-flow { min-height: 100vh; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); padding: 80px 20px; }
-.unified-card { width: 100%; max-width: 600px; background: var(--bg-1); border: 1px solid var(--border); padding: 40px; position: relative; }
+/* ─── INTEGRATED INPUT UI ─── */
+main { padding: 100px 5vw; max-width: 800px; margin: 0 auto; min-height: 100vh; }
+.unified-card { background: var(--bg-1); border: 1px solid var(--border); padding: 40px; position: relative; }
 .unified-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--cyan); }
+.form-title { font-family: var(--mono); font-size: 11px; color: var(--cyan); margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
+.input-field { margin-bottom: 25px; }
+.input-field label { display: block; font-family: var(--mono); font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
+.field-input { width: 100%; background: var(--bg-2); border: 1px solid var(--border-2); color: var(--white); padding: 14px; font-size: 16px; outline: none; transition: 0.3s; }
+.field-input:focus { border-color: var(--cyan); }
 
-.form-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--cyan); margin-bottom: 30px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-.form-tag::before { content: ''; width: 4px; height: 4px; background: var(--cyan); border-radius: 50%; animation: blink 1.5s infinite; }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.btn-run { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; font-family: var(--mono); font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+.btn-run:hover { filter: brightness(1.2); }
 
-.field-group { margin-bottom: 24px; }
-.field-label { display: block; font-family: var(--mono); font-size: 10px; color: var(--mute-1); text-transform: uppercase; margin-bottom: 8px; }
-.field-input { width: 100%; background: var(--bg-2); border: 1px solid var(--border-2); color: var(--white); padding: 12px 16px; font-size: 15px; outline: none; transition: 0.3s; }
-.field-input:focus { border-color: var(--cyan); background: var(--bg); }
-
-/* ─── 리포트 제목 및 디자인 강화 (1,800자 대응) ─── */
-.report-section { background: var(--bg-1); border: 1px solid var(--border); margin-bottom: 32px; transition: 0.3s; position: relative; overflow: hidden; }
-.report-section-label { 
-    font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--white); 
-    padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
-    display: flex; align-items: center; gap: 12px;
-}
+/* ─── REPORT DESIGN (1,800자 최적화) ─── */
+#reportState { display: none; }
+.report-header { font-size: clamp(24px, 4vw, 36px); font-weight: 700; color: var(--white); margin-bottom: 40px; letter-spacing: -0.02em; }
+.report-section { background: var(--bg-1); border: 1px solid var(--border); margin-bottom: 30px; position: relative; }
+.report-section-label { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--white); padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; }
 .report-section-label::before { content: ''; width: 4px; height: 4px; background: var(--cyan); border-radius: 50%; }
-.report-section-text { font-size: 14px; line-height: 1.85; color: var(--text-1); padding: 24px 20px; text-align: justify; white-space: pre-wrap; }
+.report-section-text { padding: 24px 20px; font-size: 14.5px; line-height: 1.9; color: #ccc; text-align: justify; white-space: pre-wrap; word-break: break-all; }
 
-/* 마지막 섹션 (최종 권고) 특별 강조 */
-.report-section:last-of-type { border: 1px solid var(--cyan); background: rgba(0,240,255,0.03); }
+/* 최종 권고 특별 강조 */
+.report-section:last-of-type { border: 1px solid var(--cyan); background: var(--cyan-dim); }
 .report-section:last-of-type .report-section-label { font-size: 24px; color: var(--cyan); }
-.report-section:last-of-type .report-section-text { font-size: 16px; color: var(--white); font-weight: 500; }
+.report-section:last-of-type .report-section-text { font-size: 16.5px; color: var(--white); font-weight: 500; }
 
-/* 기존 로딩/에러 상태 유지 */
-#loadingState, #reportState, #errorState { display: none; width: 100%; max-width: 900px; margin: 0 auto; padding-top: 100px; }
-#loadingState.active, #reportState.active, #errorState.active { display: block; }
-.btn-run { width: 100%; background: var(--cyan); color: #000; padding: 16px; font-family: var(--mono); font-weight: 700; border: none; cursor: crosshair; margin-top: 10px; }
+#loadingState { display: none; text-align: center; padding: 60px 0; font-family: var(--mono); color: var(--cyan); font-size: 14px; }
 </style>
 </head>
 <body>
 
-<nav id="top-nav" style="position:fixed; top:0; left:0; right:0; height:52px; background:rgba(0,0,0,0.9); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 5vw; z-index:9999;">
-    <div style="font-family:var(--mono); color:var(--white); font-size:14px; font-weight:700; letter-spacing:2px;">BZ<span style="color:var(--cyan)">R</span></div>
+<nav style="height:52px; background:rgba(0,0,0,0.8); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 5vw; position:fixed; top:0; left:0; right:0; z-index:10000;">
+  <div style="font-family:var(--mono); color:var(--white); font-size:14px; font-weight:700; letter-spacing:2px;">BZ<span style="color:var(--cyan)">R</span> — STRATEGY</div>
 </nav>
 
-<section id="input-flow">
-    <div id="inputState" class="unified-card">
-        <p class="form-tag">ANALYSIS_CORE_V1.0 / 입력 대기 중</p>
-        
-        <div class="field-group">
-            <label class="field-label">Identifier (Name)</label>
-            <input type="text" id="uName" class="field-input" placeholder="성명을 입력하세요">
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-            <div class="field-group">
-                <label class="field-label">Birth Date</label>
-                <input type="date" id="uBirth" class="field-input">
-            </div>
-            <div class="field-group">
-                <label class="field-label">Birth Time</label>
-                <input type="time" id="uTime" class="field-input" value="00:00">
-            </div>
-        </div>
-
-        <div class="field-group">
-            <label class="field-label">Birth Location</label>
-            <select id="uCity" class="field-input"></select>
-        </div>
-
-        <button class="btn-run" onclick="executeBZR()">전략 데이터 해킹 시작 →</button>
+<main>
+  <div id="inputState" class="unified-card">
+    <p class="form-title">CORE DATA PIPELINE ACTIVE</p>
+    
+    <div class="input-field">
+      <label>Full Name</label>
+      <input type="text" id="uName" class="field-input" placeholder="성명을 입력하세요">
     </div>
-
-    <div id="loadingState">
-        <div style="color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:20px;">SYSTEM_PROCESSING...</div>
-        <div id="loadingBar" style="height:2px; background:var(--cyan); width:0%; transition:width 0.3s; margin-bottom:20px;"></div>
-        <div id="loadingLog" style="font-family:var(--mono); font-size:11px; color:var(--mute-1); line-height:2;"></div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div class="input-field">
+        <label>Birth Date</label>
+        <input type="date" id="uBirth" class="field-input">
+      </div>
+      <div class="input-field">
+        <label>Birth Time</label>
+        <input type="time" id="uTime" class="field-input" value="00:00">
+      </div>
     </div>
-
-    <div id="reportState">
-        <div style="font-size:32px; font-weight:700; color:var(--white); margin-bottom:40px;"><span id="resName"></span> 님의 전략 리포트</div>
-        <div id="reportSections"></div>
-        <button class="btn-run" style="background:none; border:1px solid #333; color:#666;" onclick="location.reload()">새로운 분석 시작</button>
+    
+    <div class="input-field">
+      <label>Birth Location</label>
+      <select id="uCity" class="field-input"></select>
     </div>
-</section>
+    
+    <button class="btn-run" onclick="runBZR()">전략 데이터 해킹 시작 →</button>
+  </div>
+
+  <div id="loadingState">SYSTEM: ANALYZING CELESTIAL COORDINATES...</div>
+
+  <div id="reportState">
+    <div class="report-header"><span id="resName"></span>님의 전략 리포트</div>
+    <div id="reportContent"></div>
+    <button class="btn-run" style="background:none; border:1px solid #333; color:#666; margin-top:40px;" onclick="location.reload()">새로운 분석 수행</button>
+  </div>
+</main>
 
 <script>
-// 기존 도시 데이터 그대로 활용
-const CITIES = [ { name:"서울", lat:"37.5665", lng:"126.9780", label:"서울 (Seoul)" }, { name:"부산", lat:"35.1796", lng:"129.0756", label:"부산 (Busan)" }, { name:"인천", lat:"37.4563", lng:"126.7052", label:"인천 (Incheon)" }, { name:"대구", lat:"35.8714", lng:"128.6014", label:"대구 (Daegu)" }, { name:"대전", lat:"36.3504", lng:"127.3845", label:"대전 (Daejeon)" }, { name:"광주", lat:"35.1595", lng:"126.8526", label:"광주 (Gwangju)" }, { name:"울산", lat:"35.5384", lng:"129.3114", label:"울산 (Ulsan)" } ];
-const citySel = document.getElementById('uCity');
-CITIES.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.label; citySel.appendChild(o); });
+// 사장님 기존 코드의 도시 데이터 복구
+const CITIES = [
+  { name:"서울", label:"서울 (Seoul)", lat:"37.5665", lng:"126.9780" },
+  { name:"부산", label:"부산 (Busan)", lat:"35.1796", lng:"129.0756" },
+  { name:"인천", label:"인천 (Incheon)", lat:"37.4563", lng:"126.7052" },
+  { name:"대구", label:"대구 (Daegu)", lat:"35.8714", lng:"128.6014" },
+  { name:"대전", label:"대전 (Daejeon)", lat:"36.3504", lng:"127.3845" },
+  { name:"광주", label:"광주 (Gwangju)", lat:"35.1595", lng:"126.8526" },
+  { name:"울산", label:"울산 (Ulsan)", lat:"35.5384", lng:"129.3114" }
+];
 
-async function executeBZR() {
-    const name = document.getElementById('uName').value;
-    const birth = document.getElementById('uBirth').value;
-    const time = document.getElementById('uTime').value;
-    const cityVal = document.getElementById('uCity').value;
+const citySelect = document.getElementById('uCity');
+CITIES.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c.name; opt.textContent = c.label;
+  citySelect.appendChild(opt);
+});
 
-    if(!name || !birth) return alert("필수 정보를 입력해주세요.");
-
-    const city = CITIES.find(c => c.name === cityVal);
-    const dateParts = birth.split('-');
-    const timeParts = time.split(':');
-
-    const payload = {
-        name: name,
-        year: dateParts[0], month: dateParts[1], date: dateParts[2],
-        hours: timeParts[0], minutes: timeParts[1],
-        latitude: city.lat, longitude: city.lng
-    };
-
-    // 화면 전환 및 로딩 로그 시작
-    document.getElementById('inputState').style.display = 'none';
-    document.getElementById('loadingState').classList.add('active');
-    document.getElementById('resName').textContent = name;
-    
-    let prog = 0;
-    const bar = document.getElementById('loadingBar');
-    const log = document.getElementById('loadingLog');
-    const logInterval = setInterval(() => {
-        prog += 5; bar.style.width = prog + '%';
-        if(prog >= 95) clearInterval(logInterval);
-        const p = document.createElement('div');
-        p.textContent = `> [${new Date().toLocaleTimeString()}] ANALYZING_DATA_PACKET_${prog}... OK`;
-        log.appendChild(p);
-    }, 300);
-
-    try {
-        const res = await fetch('https://hook
+async function runBZR() {
+  const name = document.getElementById('uName').value;
+  const birth = document.getElementById('uBirth').value;
+  const time = document.getElementById('uTime').value;
+  const
