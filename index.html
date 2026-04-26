@@ -362,127 +362,102 @@ nav {
 .ticker-val.pos { color: var(--cyan); }
 
 /* ═══════════════════════════════════════════════════════════════
-   INPUT FLOW — DASHBOARD STYLE
+   INPUT FLOW — SINGLE PAGE FORM
 ═══════════════════════════════════════════════════════════════ */
 #input-flow {
-  min-height: 100vh;
   display: flex; align-items: stretch;
   border-top: 1px solid var(--border);
   position: relative; z-index: 1;
 }
 
-.form-sidebar {
-  width: 280px; min-width: 280px;
-  background: var(--bg-1); border-right: 1px solid var(--border);
-  padding: 40px 28px;
-  display: flex; flex-direction: column;
-}
-.form-sidebar-title {
-  font-family: var(--mono); font-size: 9px;
-  letter-spacing: 0.2em; color: var(--mute-2);
-  text-transform: uppercase; margin-bottom: 24px;
-}
-.step-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 40px; }
-.step-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  transition: all 0.3s;
-}
-.step-item.done { border-color: var(--border); background: var(--bg-2); }
-.step-item.active { border-color: rgba(0,240,255,0.3); background: var(--cyan-dim); }
-.step-num {
-  font-family: var(--mono); font-size: 9px; font-weight: 600;
-  letter-spacing: 0.1em; color: var(--mute-3);
-  width: 20px; text-align: center;
-}
-.step-item.done .step-num { color: var(--mute-1); }
-.step-item.active .step-num { color: var(--cyan); }
-.step-icon {
-  width: 16px; height: 16px;
-  border: 1px solid var(--border-3);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: all 0.3s;
-}
-.step-item.done .step-icon { border-color: var(--mute-2); background: var(--mute-2); }
-.step-item.active .step-icon { border-color: var(--cyan); background: var(--cyan); }
-.step-icon::after {
-  content: '';
-  width: 6px; height: 6px;
-  background: var(--bg);
-  clip-path: polygon(0 50%,35% 85%,100% 15%,35% 85%,0 50%);
-  opacity: 0; transition: opacity 0.3s;
-}
-.step-item.done .step-icon::after { opacity: 1; }
-.step-item.active .step-icon::after { opacity: 0; background: transparent; }
-.step-item.active .step-icon-dot {
-  width: 6px; height: 6px; background: var(--bg); border-radius: 50%;
-}
-.step-name {
-  font-family: var(--mono); font-size: 10px;
-  letter-spacing: 0.08em; color: var(--mute-2);
-  transition: color 0.3s;
-}
-.step-item.done .step-name { color: var(--mute-1); text-decoration: line-through; text-decoration-color: var(--mute-3); }
-.step-item.active .step-name { color: var(--white); }
-
-.form-sidebar-info {
-  margin-top: auto;
-  padding-top: 24px; border-top: 1px solid var(--border);
-}
-.form-sidebar-info p {
-  font-family: var(--mono); font-size: 9px;
-  letter-spacing: 0.08em; color: var(--mute-3);
-  line-height: 1.8;
-}
-
 /* Form Main */
 .form-main {
-  flex: 1; padding: clamp(40px,6vw,80px) clamp(24px,5vw,72px);
+  flex: 1;
+  padding: clamp(56px,7vw,96px) clamp(24px,8vw,120px);
   display: flex; flex-direction: column; justify-content: center;
 }
 
-.form-inner { width: 100%; max-width: 560px; }
+.form-inner { width: 100%; max-width: 800px; }
 
-/* Progress bar — top */
-.step-bars {
-  display: flex; gap: 3px; margin-bottom: 56px;
-  height: 2px;
+/* Section header */
+.form-section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
 }
-.step-bar { flex: 1; background: var(--border-2); transition: background 0.5s; }
-.step-bar.done   { background: var(--mute-2); }
-.step-bar.active { background: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
-
-.form-tag {
+.form-section-eyebrow {
   font-family: var(--mono); font-size: 9px;
-  letter-spacing: 0.2em; color: var(--mute-2);
-  text-transform: uppercase; margin-bottom: 40px;
-  display: flex; align-items: center; gap: 10px;
+  letter-spacing: 0.22em; color: var(--mute-2);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
 }
-.form-tag::before {
+.form-section-eyebrow::before {
   content: ''; width: 4px; height: 4px;
   background: var(--cyan); border-radius: 50%;
-  flex-shrink: 0; animation: blink 1.5s infinite;
+  animation: blink 1.5s infinite;
+}
+.form-section-title {
+  font-size: clamp(22px,3vw,36px); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--white);
+  margin-bottom: 4px; line-height: 1.15;
+}
+.form-section-desc {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--mute-2); margin-bottom: 48px;
+}
+
+/* 2×2 input grid */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.input-group {
+  background: var(--bg-1);
+  padding: 24px 28px 28px;
+  display: flex; flex-direction: column;
+  transition: background 0.2s;
+  position: relative;
+}
+.input-group:focus-within {
+  background: var(--bg-2);
+}
+.input-group::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--cyan);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.input-group:focus-within::before { transform: scaleX(1); }
+
+.input-group-num {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--border-3);
+  margin-bottom: 12px;
 }
 
 .form-label {
   display: block;
-  font-size: 11px; font-weight: 500;
-  letter-spacing: 0.08em; color: var(--mute-1);
-  margin-bottom: 12px; text-transform: uppercase;
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 500; letter-spacing: 0.14em;
+  color: var(--mute-2); margin-bottom: 10px;
+  text-transform: uppercase;
 }
 
 .form-input {
   width: 100%; background: transparent;
   border: none; border-bottom: 1px solid var(--border-3);
   color: var(--white);
-  font-family: var(--sans); font-size: clamp(24px,3.5vw,44px);
-  font-weight: 300; padding: 12px 0;
+  font-family: var(--sans); font-size: clamp(18px,2.2vw,28px);
+  font-weight: 300; padding: 8px 0;
   outline: none; letter-spacing: -0.01em;
   transition: border-color 0.2s; caret-color: var(--cyan);
 }
 .form-input:focus { border-bottom-color: var(--cyan); }
-.form-input::placeholder { color: var(--border-3); }
+.form-input::placeholder { color: var(--border-2); }
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
@@ -491,24 +466,43 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .city-select {
-  width: 100%; background: var(--bg-2);
+  width: 100%; background: transparent;
   border: none; border-bottom: 1px solid var(--border-3);
   color: var(--white);
-  font-family: var(--sans); font-size: clamp(20px,3vw,36px);
-  font-weight: 300; padding: 12px 0;
+  font-family: var(--sans); font-size: clamp(15px,1.8vw,22px);
+  font-weight: 300; padding: 8px 0;
   outline: none; transition: border-color 0.2s;
   cursor: crosshair; appearance: none; -webkit-appearance: none;
 }
 .city-select:focus { border-bottom-color: var(--cyan); }
 .city-select option { background: #111; color: var(--text-1); font-family: var(--mono); font-size: 13px; }
 
-.form-hint {
-  margin-top: 12px;
-  font-family: var(--mono); font-size: 10px;
-  color: var(--mute-3); letter-spacing: 0.08em;
+.input-group-hint {
+  margin-top: 8px;
+  font-family: var(--mono); font-size: 9px;
+  color: var(--mute-3); letter-spacing: 0.06em;
 }
 
-.form-actions { margin-top: 48px; display: flex; align-items: center; gap: 16px; }
+/* Validation error flash */
+.input-group.error { background: rgba(255,51,51,0.04); }
+.input-group.error .form-input,
+.input-group.error .city-select { border-bottom-color: var(--red); }
+
+/* Submit row */
+.form-submit-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 24px;
+  flex-wrap: wrap;
+}
+.form-submit-note {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--mute-3); letter-spacing: 0.08em;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-submit-note::before {
+  content: ''; width: 4px; height: 4px;
+  border-radius: 50%; background: var(--mute-3); flex-shrink: 0;
+}
 
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
@@ -522,19 +516,18 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 .btn-run {
   background: var(--cyan); color: #000;
-  border-color: var(--cyan);
-  font-weight: 600;
+  border-color: var(--cyan); font-weight: 600;
+  padding: 14px 40px; font-size: 12px;
+  letter-spacing: 0.16em;
 }
 .btn-run:hover { background: transparent; color: var(--cyan); }
+.btn-run svg { transition: transform 0.2s; }
+.btn-run:hover svg { transform: translateX(4px); }
 
-.form-skip {
-  font-family: var(--mono); font-size: 10px;
-  letter-spacing: 0.1em; color: var(--mute-3);
-  text-transform: uppercase; cursor: crosshair;
-  background: none; border: none;
-  transition: color 0.2s;
-}
-.form-skip:hover { color: var(--mute-1); }
+/* ── Hidden helpers kept for JS compatibility ── */
+.step-bars, .form-tag, .form-hint,
+#nextBtn, #skipBtn, #formTag, #formLabel,
+#formInput, #citySelect { /* managed by JS — some hidden via inline style */ }
 
 /* ═══════════════════════════════════════════════════════════════
    LOADING STATE — GLITCH TERMINAL
@@ -675,26 +668,47 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .report-section-label {
-  font-family: var(--mono); font-size: 9px;
-  letter-spacing: 0.2em; color: var(--mute-2);
-  text-transform: uppercase;
-  display: flex; align-items: center; gap: 8px;
-  padding: 16px 20px 12px;
+  font-family: var(--sans); font-size: 18px;
+  font-weight: 700; letter-spacing: -0.01em;
+  color: var(--white);
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 20px 14px;
+  line-height: 1.2;
 }
 .report-section-label::before {
-  content: ''; width: 3px; height: 3px;
-  background: var(--cyan); border-radius: 50%; flex-shrink: 0;
+  content: ''; width: 4px; height: 4px;
+  background: var(--cyan); border-radius: 50%;
+  flex-shrink: 0; margin-top: 1px;
 }
 .report-section-num {
   margin-left: auto; color: var(--border-3);
-  font-size: 9px; letter-spacing: 0.1em;
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 400; letter-spacing: 0.1em;
+}
+
+/* 마지막 섹션 — 결론 강조 */
+.report-section:last-of-type {
+  background: rgba(0,240,255,0.04);
+  border-top: 2px solid var(--cyan);
+}
+.report-section:last-of-type .report-section-label {
+  font-size: 22px;
+  color: var(--cyan);
+}
+.report-section:last-of-type .report-section-label::before {
+  width: 6px; height: 6px;
+  box-shadow: 0 0 8px var(--cyan);
+}
+.report-section:last-of-type::before {
+  opacity: 0.6 !important;
 }
 
 .report-section-text {
   font-size: 13px; font-weight: 400;
   color: var(--text-1); line-height: 1.85;
-  padding: 0 20px 20px;
+  padding: 0 20px 24px;
   white-space: pre-wrap; word-break: break-word;
+  text-align: justify;
 }
 
 /* Cyan accent line on left edge */
@@ -914,11 +928,16 @@ footer {
   .logic-grid { grid-template-columns: 1fr; }
   .footer-top { grid-template-columns: 1fr; }
   .nav-center { display: none; }
-  .form-sidebar { display: none; }
+  .input-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   .nav-links a { display: none; }
   .nav-links a:last-child { display: flex; }
+  .form-main { padding: 40px 20px; }
+  .input-grid { gap: 1px; }
+  .input-group { padding: 20px 16px 24px; }
+  .form-submit-row { flex-direction: column; align-items: flex-start; }
+  .btn-run { width: 100%; justify-content: center; }
 }
 </style>
 </head>
@@ -1024,72 +1043,72 @@ footer {
 <div class="ticker-wrap"><div class="ticker-track" id="t1"></div></div>
 
 <!-- ══════════════════════════════════════════════════
-     INPUT FLOW
+     INPUT FLOW — SINGLE PAGE FORM
 ══════════════════════════════════════════════════ -->
 <section id="input-flow">
-
-  <!-- Sidebar -->
-  <aside class="form-sidebar">
-    <p class="form-sidebar-title">ANALYSIS PIPELINE</p>
-    <div class="step-list" id="stepList">
-      <div class="step-item active" id="si0">
-        <span class="step-num">01</span>
-        <div class="step-icon"><span class="step-icon-dot"></span></div>
-        <span class="step-name">식별자</span>
-      </div>
-      <div class="step-item" id="si1">
-        <span class="step-num">02</span>
-        <div class="step-icon"></div>
-        <span class="step-name">출생 데이터</span>
-      </div>
-      <div class="step-item" id="si2">
-        <span class="step-num">03</span>
-        <div class="step-icon"></div>
-        <span class="step-name">출생 시각</span>
-      </div>
-      <div class="step-item" id="si3">
-        <span class="step-num">04</span>
-        <div class="step-icon"></div>
-        <span class="step-name">출생지</span>
-      </div>
-    </div>
-    <div class="form-sidebar-info">
-      <p>입력된 데이터는<br>암호화되어 처리됩니다.<br>BZR ENGINE v1.0</p>
-    </div>
-  </aside>
-
-  <!-- Main Form Area -->
   <div class="form-main">
     <div class="form-inner">
 
-      <!-- Progress bars -->
-      <div class="step-bars">
-        <div class="step-bar active" id="bar0"></div>
-        <div class="step-bar" id="bar1"></div>
-        <div class="step-bar" id="bar2"></div>
-        <div class="step-bar" id="bar3"></div>
+      <!-- Section header -->
+      <div class="form-section-eyebrow" style="margin-bottom:12px">DATA ACQUISITION / INPUT REQUIRED</div>
+      <h2 class="form-section-title">출생 데이터 입력</h2>
+      <p class="form-section-desc">아래 4개 항목을 모두 입력한 뒤 분석을 시작하세요.</p>
+
+      <!-- ─── SINGLE-PAGE INPUT GRID ─── -->
+      <div class="input-grid" id="singlePageForm">
+
+        <!-- 01 이름 -->
+        <div class="input-group" id="ig-name">
+          <span class="input-group-num">01</span>
+          <label class="form-label" for="sp-name">식별자 / 성명</label>
+          <input class="form-input" id="sp-name" type="text"
+                 placeholder="홍길동" autocomplete="off">
+          <span class="input-group-hint">분석 리포트에 표시됩니다</span>
+        </div>
+
+        <!-- 02 생년월일 -->
+        <div class="input-group" id="ig-birth">
+          <span class="input-group-num">02</span>
+          <label class="form-label" for="sp-birth">출생 데이터 / 생년월일</label>
+          <input class="form-input" id="sp-birth" type="date">
+          <span class="input-group-hint">YYYY-MM-DD 형식</span>
+        </div>
+
+        <!-- 03 출생 시각 -->
+        <div class="input-group" id="ig-time">
+          <span class="input-group-num">03</span>
+          <label class="form-label" for="sp-time">출생 시각 <span style="color:var(--mute-3);font-size:9px">(선택)</span></label>
+          <input class="form-input" id="sp-time" type="time">
+          <span class="input-group-hint">모르는 경우 비워두면 됩니다</span>
+        </div>
+
+        <!-- 04 출생지 -->
+        <div class="input-group" id="ig-city">
+          <span class="input-group-num">04</span>
+          <label class="form-label" for="sp-city">출생지 / 도시</label>
+          <select class="city-select" id="sp-city">
+            <option value="">— 도시를 선택하세요 —</option>
+          </select>
+          <span class="input-group-hint">위도·경도 자동 매핑</span>
+        </div>
+
+      </div><!-- /.input-grid -->
+
+      <!-- Submit -->
+      <div class="form-submit-row">
+        <span class="form-submit-note">입력된 데이터는 암호화되어 처리됩니다</span>
+        <button class="btn btn-run" id="submitBtn" onclick="submitSingleForm()">
+          데이터 분석 시작
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7H13M7 1L13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
 
-      <!-- INPUT STATE -->
-      <div id="inputState">
-        <p class="form-tag" id="formTag">INPUT 1/4 / 분석 대상 초기화 중...</p>
-        <label class="form-label" id="formLabel">식별자</label>
-        <input  class="form-input"  id="formInput"  type="text" placeholder="성명을 입력하세요" autocomplete="off">
-        <select class="city-select" id="citySelect" style="display:none"></select>
-        <p class="form-hint" id="formHint">Enter 키를 눌러 다음 단계로 이동</p>
-        <div class="form-actions">
-          <button class="btn btn-run" id="nextBtn" onclick="advance()">
-            다음
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 6H11M6 1L11 6L6 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="form-skip" id="skipBtn" style="display:none" onclick="advance(true)">건너뛰기 →</button>
-        </div>
-      </div>
+      <!-- ─── STATES (Loading / Report / Error) ─── -->
 
       <!-- LOADING STATE -->
-      <div id="loadingState">
+      <div id="loadingState" style="margin-top:48px">
         <div class="loading-header">
           <div class="loading-spinner"></div>
           <span class="loading-tag">PROCESSING / KERNEL ACTIVE</span>
@@ -1103,7 +1122,7 @@ footer {
       </div>
 
       <!-- REPORT STATE -->
-      <div id="reportState">
+      <div id="reportState" style="margin-top:48px">
         <div class="report-topbar">
           <span class="report-meta" id="reportMeta">ANALYSIS COMPLETE / BZR ENGINE v1.0</span>
           <span class="report-badge">REPORT READY</span>
@@ -1119,7 +1138,7 @@ footer {
       </div>
 
       <!-- ERROR STATE -->
-      <div id="errorState">
+      <div id="errorState" style="margin-top:48px">
         <div class="error-header">
           <div class="error-icon">!</div>
           <span class="error-tag">TRANSMISSION ERROR</span>
@@ -1134,8 +1153,26 @@ footer {
         </div>
       </div>
 
-    </div>
-  </div>
+      <!-- ─── HIDDEN LEGACY ELEMENTS (JS compatibility) ─── -->
+      <!-- These are required by the existing JS but not visible to users -->
+      <div style="display:none" aria-hidden="true">
+        <div id="inputState"></div>
+        <input id="formInput" type="text">
+        <select id="citySelect"></select>
+        <p id="formTag"></p>
+        <label id="formLabel"></label>
+        <button id="nextBtn"></button>
+        <button id="skipBtn"></button>
+        <div class="step-bars">
+          <div class="step-bar" id="bar0"></div>
+          <div class="step-bar" id="bar1"></div>
+          <div class="step-bar" id="bar2"></div>
+          <div class="step-bar" id="bar3"></div>
+        </div>
+      </div>
+
+    </div><!-- /.form-inner -->
+  </div><!-- /.form-main -->
 </section>
 
 <!-- ══════════════════════════════════════════════════
@@ -1729,9 +1766,99 @@ function resetForm() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// INIT
+// INIT — Single Page Form
 // ═══════════════════════════════════════════════════════════════════
+
+// Populate the visible city select (#sp-city)
+(function populateSpCity() {
+  const sel = document.getElementById('sp-city');
+  if (!sel) return;
+  CITIES.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.name; o.textContent = c.label;
+    sel.appendChild(o);
+  });
+})();
+
+// Also populate the hidden legacy #citySelect (JS compat) — already done in section 7 above
+
+// Silence the old renderStep init (hidden form, no-op)
 renderStep();
+
+// ─── NEW: Single-page form submit ───────────────────────────────
+function submitSingleForm() {
+  // Read values from the new visible inputs
+  const nameVal  = (document.getElementById('sp-name')?.value  || '').trim();
+  const birthVal = (document.getElementById('sp-birth')?.value || '').trim();
+  const timeVal  = (document.getElementById('sp-time')?.value  || '').trim();
+  const cityVal  = (document.getElementById('sp-city')?.value  || '').trim();
+
+  // Validation — highlight errors
+  let hasError = false;
+
+  const igName = document.getElementById('ig-name');
+  const igBirth = document.getElementById('ig-birth');
+  const igCity = document.getElementById('ig-city');
+
+  [igName, igBirth, igCity].forEach(el => el && el.classList.remove('error'));
+
+  if (!nameVal)  { igName  && igName.classList.add('error');  hasError = true; }
+  if (!birthVal) { igBirth && igBirth.classList.add('error'); hasError = true; }
+  if (!cityVal)  { igCity  && igCity.classList.add('error');  hasError = true; }
+
+  if (hasError) {
+    // Scroll to the first errored field
+    const firstErr = document.querySelector('.input-group.error');
+    if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  // Map to formData (used by buildPayload / renderReport)
+  formData.name  = nameVal;
+  formData.birth = birthVal;
+  formData.time  = timeVal;
+  formData.city  = cityVal;
+
+  const city = CITIES.find(c => c.name === cityVal);
+  formData.lat = city ? city.lat : '';
+  formData.lng = city ? city.lng : '';
+
+  // Hide the input grid, show states via existing submitToAPI
+  const grid = document.getElementById('singlePageForm');
+  if (grid) grid.style.display = 'none';
+  const submitRow = document.querySelector('.form-submit-row');
+  if (submitRow) submitRow.style.display = 'none';
+  const header = document.querySelector('.form-section-title');
+  if (header) header.closest('h2') && (header.style.display = 'none');
+
+  submitToAPI();
+}
+
+// Override resetForm to also restore the single-page form
+const _origResetForm = resetForm;
+function resetForm() {
+  // Restore single-page grid
+  const grid = document.getElementById('singlePageForm');
+  if (grid) { grid.style.display = ''; }
+  const submitRow = document.querySelector('.form-submit-row');
+  if (submitRow) { submitRow.style.display = ''; }
+  // Clear error states
+  document.querySelectorAll('.input-group.error').forEach(el => el.classList.remove('error'));
+  // Clear values
+  ['sp-name','sp-birth','sp-time'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const spCity = document.getElementById('sp-city');
+  if (spCity) spCity.value = '';
+  // Reset formData
+  Object.keys(formData).forEach(k => formData[k]='');
+  // Hide all states
+  [loadingState, reportState, errorState].forEach(el => {
+    el.classList.remove('active'); el.style.display = '';
+  });
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+}
 </script>
 </body>
 </html>
