@@ -1713,12 +1713,12 @@ function renderReport(data) {
 
   lines.forEach(line => {
     // ## 로 시작하는 줄 = 새 섹션 제목
-    if (/^\s*#{1,6}\s/.test(line)) {
+    if (/^\s*#{1,6}/.test(line)) {
       // 이전 섹션 저장
       if (currentTitle !== null) {
         sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
       }
-      // ## 기호 제거 후 제목으로
+      // ## 기호 제거 후 제목으로 (## 뒤 공백 유무 무관)
       currentTitle = line.replace(/^\s*#{1,6}\s*/, '').trim();
       currentBody  = [];
     } else {
