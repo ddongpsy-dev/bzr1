@@ -1703,51 +1703,80 @@ function renderReport(data) {
     return;
   }
 
-  // 1단계: 마크다운 제거
-  // 백엔드가 마크다운 형식으로 응답할 때 기호를 걷어냄
-  function stripMd(str) {
-    return str
-      .replace(/#{1,6}\s*/g, '')           // ### 헤더 마크 제거
-      .replace(/\*\*(.+?)\*\*/gs, '$1') // **굵게** 제거
-      .replace(/\*(.+?)\*/gs, '$1')       // *기울임* 제거
-      .replace(/^[\-\*\u2022]\s+/gm, '') // 줄 앞 - * • 불릿 제거
-      .replace(/^\d+\.\s+/gm, '')        // 줄 앞 1. 2. 순번 제거
-      .trim();
-  }
+  const rawStr = String(raw).trim();
 
-  const reportStr = stripMd(String(raw).trim());
+  // ── 섹션 구분 전략 ────────────────────────────────────────────────
+  // AI가 보내는 텍스트에서 "섹션 제목"을 식별하는 기준:
+  // 마크다운 헤더(##)로 시작하는 줄 → 새 카드 시작
+  // 그 외 모든 줄바꿈(\n, \n\n)은 카드 내부 본문으로 처리
+  //
+  // 만약 ## 헤더가 없으면 → 전체를 카드 하나로 출력
 
-  // 2단계: 섹션 분리
-  // 연속 빈 줄(2회 이상 개행)만 카드 경계로 인식
-  // 1회 개행은 카드 안에서 그대로 줄바꿈으로 보존 (white-space: pre-wrap)
-  const blocks = reportStr.split(/\n{2,}/);
+  // 헤더 감지 정규식: 줄 시작이 # 1~6개
+  const hasHeaders = /^#{1,6}\s+\S/m.test(rawStr);
 
-  if (blocks.length <= 1) {
-    const lines = reportStr.split('\n');
-    const title = lines[0].trim();
-    const body  = lines.slice(1).join('\n').trim();
-    container.appendChild(makeSection(title || '분석 리포트', body || reportStr, 0));
-    return;
-  }
+  if (hasHeaders) {
+    // ── 헤더 기반 분리 ──────────────────────────────────────────────
+    // ## 제목 줄을 만나면 새 카드 시작
+    // 제목 줄 사이의 모든 내용(줄바꿈 포함)은 본문으로 보존
+    const cardPattern = /^(#{1,6})\s+(.+)$/gm;
+    const sections = [];
+    let lastIdx = 0;
+    let lastTitle = null;
+    let match;
 
-  // 3단계: 블록별 제목 + 본문 추출
-  // lines[0]        = 제목 (항상)
-  // lines.slice(1)  = 본문 전체, 개행 유지하여 재결합
-  let secIdx = 0;
-  blocks.forEach(block => {
-    const trimmed = block.trim();
-    if (!trimmed) return;
-
-    const lines = trimmed.split('\n');
-    const title = lines[0].trim();
-    const body  = lines.slice(1).join('\n').trim();
-
-    if (!body) {
-      container.appendChild(makeSection('섹션 ' + (secIdx + 1), title, secIdx++));
-    } else {
-      container.appendChild(makeSection(title, body, secIdx++));
+    while ((match = cardPattern.exec(rawStr)) !== null) {
+      if (lastTitle !== null) {
+        sections.push({
+          title: lastTitle,
+          body: rawStr.slice(lastIdx, match.index).trim()
+        });
+      } else if (match.index > 0) {
+        // 첫 헤더 전에 내용이 있으면 서문으로 카드 생성
+        const preamble = rawStr.slice(0, match.index).trim();
+        if (preamble) sections.push({ title: '분석 개요', body: preamble });
+      }
+      lastTitle = match[2].trim();
+      lastIdx = match.index + match[0].length;
     }
-  });
+    // 마지막 블록
+    if (lastTitle !== null) {
+      sections.push({
+        title: lastTitle,
+        body: rawStr.slice(lastIdx).trim()
+      });
+    }
+
+    sections.forEach((sec, i) => {
+      // 마크다운 볼드/이탤릭/불릿만 본문에서 제거 (헤더는 이미 title로 처리)
+      const cleanBody = sec.body
+        .replace(/\*\*(.+?)\*\*/gs, '$1')
+        .replace(/\*(.+?)\*/gs, '$1')
+        .replace(/^[\-\*\u2022]\s+/gm, '')
+        .replace(/^\d+\.\s+/gm, '');
+      container.appendChild(makeSection(sec.title, cleanBody, i));
+    });
+
+  } else {
+    // ── 헤더 없음: 전체를 카드 하나로 ─────────────────────────────
+    // 줄바꿈을 쪼개지 않고 본문 그대로 렌더링
+    const cleanStr = rawStr
+      .replace(/\*\*(.+?)\*\*/gs, '$1')
+      .replace(/\*(.+?)\*/gs, '$1')
+      .replace(/^[\-\*\u2022]\s+/gm, '')
+      .replace(/^\d+\.\s+/gm, '');
+
+    // 첫 줄이 짧고 나머지가 있으면 제목으로, 아니면 전체 본문
+    const lines = cleanStr.split('\n');
+    const firstLine = lines[0].trim();
+    const rest = lines.slice(1).join('\n').trim();
+
+    if (rest && firstLine.length < 50) {
+      container.appendChild(makeSection(firstLine, rest, 0));
+    } else {
+      container.appendChild(makeSection('분석 리포트', cleanStr, 0));
+    }
+  }
 }
 
 function makeSection(label, body, idx) {
