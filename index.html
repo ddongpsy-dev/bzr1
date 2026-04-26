@@ -9,249 +9,145 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════
-   RESET & TOKENS
+   기존 BZR 시스템의 모든 핵심 스타일 및 토큰 유지
 ═══════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #000000;
-  --bg-1:      #080808;
-  --bg-2:      #0d0d0d;
-  --border:    #1a1a1a;
-  --border-2:  #242424;
-  --white:     #f0f0f0;
-  --cyan:      #00f0ff;
-  --cyan-dim:  rgba(0,240,255,0.08);
-  --sans:      'Inter', -apple-system, sans-serif;
-  --mono:      'JetBrains Mono', monospace;
+  --bg:        #000000; --bg-1: #080808; --bg-2: #0d0d0d; --bg-3: #111111;
+  --border:    #1a1a1a; --border-2: #242424; --border-3: #2e2e2e;
+  --white:     #f0f0f0; --cyan: #00f0ff; --cyan-dim: rgba(0,240,255,0.08);
+  --mute-1:    #666666; --mute-2: #4a4a4a; --mute-3: #333333;
+  --text-1:    #cccccc; --sans: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
 }
 
-body {
-  background: var(--bg);
-  color: #cccccc;
-  font-family: var(--sans);
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+body { background: var(--bg); color: var(--text-1); font-family: var(--sans); overflow-x: hidden; cursor: crosshair; }
+body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,240,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.018) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
+body::after { content: ''; position: fixed; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: scanline 8s linear infinite; pointer-events: none; z-index: 9998; opacity: 0.15; }
+@keyframes scanline { 0%{top:-1px;opacity:0} 100%{top:100vh;opacity:0} }
 
-/* SCANLINE EFFECT */
-body::after {
-  content: ''; position: fixed; inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  background-size: 100% 2px, 3px 100%;
-  pointer-events: none; z-index: 9999;
-}
+/* ─── 통합 입력 UI (BZR 에디션) ─── */
+#input-flow { min-height: 100vh; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); padding: 80px 20px; }
+.unified-card { width: 100%; max-width: 600px; background: var(--bg-1); border: 1px solid var(--border); padding: 40px; position: relative; }
+.unified-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--cyan); }
 
-/* NAV */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 52px;
-  padding: 0 5vw; display: flex; align-items: center; justify-content: space-between;
-  background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px);
-}
-.nav-logo { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--white); text-decoration: none; letter-spacing: 2px; }
-.nav-logo span { color: var(--cyan); }
+.form-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--cyan); margin-bottom: 30px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.form-tag::before { content: ''; width: 4px; height: 4px; background: var(--cyan); border-radius: 50%; animation: blink 1.5s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* MAIN LAYOUT */
-main {
-  padding: 100px 5vw;
-  max-width: 800px;
-  margin: 0 auto;
-}
+.field-group { margin-bottom: 24px; }
+.field-label { display: block; font-family: var(--mono); font-size: 10px; color: var(--mute-1); text-transform: uppercase; margin-bottom: 8px; }
+.field-input { width: 100%; background: var(--bg-2); border: 1px solid var(--border-2); color: var(--white); padding: 12px 16px; font-size: 15px; outline: none; transition: 0.3s; }
+.field-input:focus { border-color: var(--cyan); background: var(--bg); }
 
-/* UNIFIED INPUT FORM */
-.input-container {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  padding: 40px;
+/* ─── 리포트 제목 및 디자인 강화 (1,800자 대응) ─── */
+.report-section { background: var(--bg-1); border: 1px solid var(--border); margin-bottom: 32px; transition: 0.3s; position: relative; overflow: hidden; }
+.report-section-label { 
+    font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--white); 
+    padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 12px;
 }
-.input-container h2 {
-  font-family: var(--mono); font-size: 12px; color: var(--cyan);
-  margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase;
-}
-.input-field { margin-bottom: 25px; }
-.input-field label {
-  display: block; font-family: var(--mono); font-size: 10px;
-  color: #666; text-transform: uppercase; margin-bottom: 8px;
-}
-.input-field input, .input-field select {
-  width: 100%; background: var(--bg-2); border: 1px solid var(--border-2);
-  color: var(--white); padding: 12px; font-size: 16px; outline: none;
-}
-.input-field input:focus { border-color: var(--cyan); }
+.report-section-label::before { content: ''; width: 4px; height: 4px; background: var(--cyan); border-radius: 50%; }
+.report-section-text { font-size: 14px; line-height: 1.85; color: var(--text-1); padding: 24px 20px; text-align: justify; white-space: pre-wrap; }
 
-.btn-start {
-  width: 100%; background: var(--cyan); color: #000; border: none;
-  padding: 18px; font-family: var(--mono); font-weight: 700;
-  cursor: pointer; transition: 0.3s; margin-top: 10px;
-}
-.btn-start:hover { filter: brightness(1.2); }
+/* 마지막 섹션 (최종 권고) 특별 강조 */
+.report-section:last-of-type { border: 1px solid var(--cyan); background: rgba(0,240,255,0.03); }
+.report-section:last-of-type .report-section-label { font-size: 24px; color: var(--cyan); }
+.report-section:last-of-type .report-section-text { font-size: 16px; color: var(--white); font-weight: 500; }
 
-/* REPORT STYLING */
-#report-display { display: none; }
-.report-header { font-size: 28px; font-weight: 700; color: var(--white); margin-bottom: 40px; }
-
-.report-section {
-  background: var(--bg-1); border: 1px solid var(--border); margin-bottom: 24px;
-}
-.report-section-label {
-  font-family: var(--mono); font-size: 18px; font-weight: 700;
-  color: var(--white); padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.report-section-text {
-  padding: 24px 20px; font-size: 15px; line-height: 1.8;
-  color: #ccc; text-align: justify; white-space: pre-wrap;
-}
-
-/* FINAL RECOMMENDATION SPECIAL STYLING */
-.report-section:last-of-type {
-  border: 1px solid var(--cyan);
-  background: var(--cyan-dim);
-}
-.report-section:last-of-type .report-section-label {
-  font-size: 22px; color: var(--cyan);
-}
-.report-section:last-of-type .report-section-text {
-  font-size: 17px; color: var(--white); font-weight: 500;
-}
-
-/* LOADING */
-#loading-screen { display: none; text-align: center; padding: 50px 0; }
-.loader { color: var(--cyan); font-family: var(--mono); font-size: 14px; }
-
+/* 기존 로딩/에러 상태 유지 */
+#loadingState, #reportState, #errorState { display: none; width: 100%; max-width: 900px; margin: 0 auto; padding-top: 100px; }
+#loadingState.active, #reportState.active, #errorState.active { display: block; }
+.btn-run { width: 100%; background: var(--cyan); color: #000; padding: 16px; font-family: var(--mono); font-weight: 700; border: none; cursor: crosshair; margin-top: 10px; }
 </style>
 </head>
 <body>
 
-<nav>
-  <a href="#" class="nav-logo">BZ<span>R</span> — STRATEGY</a>
-  <div style="font-size: 10px; color: #444;">TERMINAL ACTIVE</div>
+<nav id="top-nav" style="position:fixed; top:0; left:0; right:0; height:52px; background:rgba(0,0,0,0.9); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 5vw; z-index:9999;">
+    <div style="font-family:var(--mono); color:var(--white); font-size:14px; font-weight:700; letter-spacing:2px;">BZ<span style="color:var(--cyan)">R</span></div>
 </nav>
 
-<main>
-  <div id="input-screen" class="input-container">
-    <h2>Core Data Pipeline</h2>
-    
-    <div class="input-field">
-      <label>Full Name</label>
-      <input type="text" id="name" placeholder="성함을 입력하세요">
-    </div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-      <div class="input-field">
-        <label>Birth Date</label>
-        <input type="date" id="birthDate">
-      </div>
-      <div class="input-field">
-        <label>Birth Time</label>
-        <input type="time" id="birthTime" value="00:00">
-      </div>
-    </div>
-    
-    <div class="input-field">
-      <label>Birth Location</label>
-      <select id="location">
-        <option value="Seoul">서울 (Seoul)</option>
-        <option value="Busan">부산 (Busan)</option>
-        <option value="Incheon">인천 (Incheon)</option>
-        <option value="Daegu">대구 (Daegu)</option>
-        <option value="Daejeon">대전 (Daejeon)</option>
-        <option value="Gwangju">광주 (Gwangju)</option>
-        <option value="Ulsan">울산 (Ulsan)</option>
-        <option value="Other">기타 (Other)</option>
-      </select>
-    </div>
-    
-    <button class="btn-start" onclick="startAnalysis()">운명 데이터 해킹 시작 →</button>
-  </div>
+<section id="input-flow">
+    <div id="inputState" class="unified-card">
+        <p class="form-tag">ANALYSIS_CORE_V1.0 / 입력 대기 중</p>
+        
+        <div class="field-group">
+            <label class="field-label">Identifier (Name)</label>
+            <input type="text" id="uName" class="field-input" placeholder="성명을 입력하세요">
+        </div>
 
-  <div id="loading-screen">
-    <div class="loader">SYTEM: ANALYZING CELESTIAL COORDINATES...</div>
-  </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+            <div class="field-group">
+                <label class="field-label">Birth Date</label>
+                <input type="date" id="uBirth" class="field-input">
+            </div>
+            <div class="field-group">
+                <label class="field-label">Birth Time</label>
+                <input type="time" id="uTime" class="field-input" value="00:00">
+            </div>
+        </div>
 
-  <div id="report-display">
-    <div class="report-header"><span id="user-name"></span>님의 전략 리포트</div>
-    <div id="report-content"></div>
-    <button class="btn-start" style="background:none; border:1px solid #333; color:#666; margin-top:40px;" onclick="location.reload()">새로운 분석 수행</button>
-  </div>
-</main>
+        <div class="field-group">
+            <label class="field-label">Birth Location</label>
+            <select id="uCity" class="field-input"></select>
+        </div>
+
+        <button class="btn-run" onclick="executeBZR()">전략 데이터 해킹 시작 →</button>
+    </div>
+
+    <div id="loadingState">
+        <div style="color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:20px;">SYSTEM_PROCESSING...</div>
+        <div id="loadingBar" style="height:2px; background:var(--cyan); width:0%; transition:width 0.3s; margin-bottom:20px;"></div>
+        <div id="loadingLog" style="font-family:var(--mono); font-size:11px; color:var(--mute-1); line-height:2;"></div>
+    </div>
+
+    <div id="reportState">
+        <div style="font-size:32px; font-weight:700; color:var(--white); margin-bottom:40px;"><span id="resName"></span> 님의 전략 리포트</div>
+        <div id="reportSections"></div>
+        <button class="btn-run" style="background:none; border:1px solid #333; color:#666;" onclick="location.reload()">새로운 분석 시작</button>
+    </div>
+</section>
 
 <script>
-async function startAnalysis() {
-  const name = document.getElementById('name').value;
-  const date = document.getElementById('birthDate').value;
-  const time = document.getElementById('birthTime').value;
-  const loc = document.getElementById('location').value;
+// 기존 도시 데이터 그대로 활용
+const CITIES = [ { name:"서울", lat:"37.5665", lng:"126.9780", label:"서울 (Seoul)" }, { name:"부산", lat:"35.1796", lng:"129.0756", label:"부산 (Busan)" }, { name:"인천", lat:"37.4563", lng:"126.7052", label:"인천 (Incheon)" }, { name:"대구", lat:"35.8714", lng:"128.6014", label:"대구 (Daegu)" }, { name:"대전", lat:"36.3504", lng:"127.3845", label:"대전 (Daejeon)" }, { name:"광주", lat:"35.1595", lng:"126.8526", label:"광주 (Gwangju)" }, { name:"울산", lat:"35.5384", lng:"129.3114", label:"울산 (Ulsan)" } ];
+const citySel = document.getElementById('uCity');
+CITIES.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.label; citySel.appendChild(o); });
 
-  if(!name || !date) {
-    alert("모든 필수 데이터를 입력해주세요.");
-    return;
-  }
+async function executeBZR() {
+    const name = document.getElementById('uName').value;
+    const birth = document.getElementById('uBirth').value;
+    const time = document.getElementById('uTime').value;
+    const cityVal = document.getElementById('uCity').value;
 
-  // 화면 전환
-  document.getElementById('input-screen').style.display = 'none';
-  document.getElementById('loading-screen').style.display = 'block';
+    if(!name || !birth) return alert("필수 정보를 입력해주세요.");
 
-  const payload = {
-    name: name,
-    date: date,
-    time: time,
-    location: loc
-  };
+    const city = CITIES.find(c => c.name === cityVal);
+    const dateParts = birth.split('-');
+    const timeParts = time.split(':');
 
-  try {
-    // 실제 Make.com 웹훅 주소로 교체하세요
-    const response = await fetch('https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const payload = {
+        name: name,
+        year: dateParts[0], month: dateParts[1], date: dateParts[2],
+        hours: timeParts[0], minutes: timeParts[1],
+        latitude: city.lat, longitude: city.lng
+    };
 
-    if (response.ok) {
-      const data = await response.json();
-      displayReport(name, data.report || data.output);
-    } else {
-      throw new Error("서버 응답 오류");
-    }
-  } catch (error) {
-    alert("데이터 분석 중 오류가 발생했습니다.");
-    location.reload();
-  }
-}
-
-function displayReport(name, rawText) {
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('report-display').style.display = 'block';
-  document.getElementById('user-name').innerText = name;
-
-  const contentArea = document.getElementById('report-content');
-  contentArea.innerHTML = '';
-
-  // 두 번 이상의 줄바꿈을 기준으로 섹션 분리
-  const sections = rawText.split(/\n{2,}/);
-
-  sections.forEach((section, index) => {
-    const lines = section.trim().split('\n');
-    const title = lines[0];
-    const body = lines.slice(1).join('\n');
-
-    if (!body) return; // 제목만 있는 경우 방지
-
-    const sectionEl = document.createElement('div');
-    sectionEl.className = 'report-section';
+    // 화면 전환 및 로딩 로그 시작
+    document.getElementById('inputState').style.display = 'none';
+    document.getElementById('loadingState').classList.add('active');
+    document.getElementById('resName').textContent = name;
     
-    sectionEl.innerHTML = `
-      <div class="report-section-label">
-        ${title}
-        <span style="font-size:10px; opacity:0.4;">0${index + 1}</span>
-      </div>
-      <div class="report-section-text">${body}</div>
-    `;
-    
-    contentArea.appendChild(sectionEl);
-  });
-}
-</script>
-</body>
-</html>
+    let prog = 0;
+    const bar = document.getElementById('loadingBar');
+    const log = document.getElementById('loadingLog');
+    const logInterval = setInterval(() => {
+        prog += 5; bar.style.width = prog + '%';
+        if(prog >= 95) clearInterval(logInterval);
+        const p = document.createElement('div');
+        p.textContent = `> [${new Date().toLocaleTimeString()}] ANALYZING_DATA_PACKET_${prog}... OK`;
+        log.appendChild(p);
+    }, 300);
+
+    try {
+        const res = await fetch('https://hook
