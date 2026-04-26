@@ -11,324 +11,172 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #060607;
-    --bg2: #0a0a0b;
-    --bg3: #0e0e10;
-    --line: #171719;
-    --line2: #222226;
-    --dim: #2e2e33;
-    --mid: #55555e;
-    --text: #c8c4bc;
+    --bg:     #060607;
+    --bg2:    #0a0a0b;
+    --line:   #171719;
+    --line2:  #222226;
+    --dim:    #2e2e33;
+    --mid:    #55555e;
+    --text:   #c8c4bc;
     --bright: #e6e2d8;
     --accent: #a89878;
-    --mono: 'Share Tech Mono', monospace;
-    --serif: 'IM Fell English', 'Georgia', serif;
+    --red:    #7a3030;
+    --red2:   #c04040;
+    --mono:   'Share Tech Mono', monospace;
+    --serif:  'IM Fell English', 'Georgia', serif;
   }
 
   html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); overflow-x: hidden; cursor: crosshair; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    overflow-x: hidden;
-    cursor: crosshair;
-  }
-
-  /* ── NOISE OVERLAY ── */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
+    content: ''; position: fixed; inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.04;
-    pointer-events: none;
-    z-index: 9999;
+    opacity: 0.04; pointer-events: none; z-index: 9999;
+  }
+  body::after {
+    content: ''; position: fixed; left: 0; right: 0; height: 3px;
+    background: linear-gradient(transparent 0%, var(--line2) 50%, transparent 100%);
+    animation: scan 9s linear infinite; pointer-events: none; z-index: 9998; opacity: 0.5;
   }
 
-  /* ── SCANLINE ── */
-  body::after {
-    content: '';
-    position: fixed;
-    left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(transparent 0%, var(--line2) 50%, transparent 100%);
-    animation: scan 9s linear infinite;
-    pointer-events: none;
-    z-index: 9998;
-    opacity: 0.5;
-  }
-  @keyframes scan { 0%{top:-3px} 100%{top:100vh} }
+  @keyframes scan    { 0%{top:-3px} 100%{top:100vh} }
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes ticker  { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
 
   /* ── NAV ── */
   nav {
-    position: fixed; top: 0; left: 0; right: 0;
-    padding: 18px clamp(24px, 7vw, 110px);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 18px clamp(24px,7vw,110px);
     display: flex; justify-content: space-between; align-items: center;
-    z-index: 1000;
-    background: rgba(6,6,7,0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(6,6,7,0.88); backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line);
   }
-  .nav-logo {
-    font-family: var(--serif);
-    font-size: 22px; font-weight: 400;
-    color: var(--bright); letter-spacing: 0.04em;
-    text-decoration: none;
-  }
+  .nav-logo { font-family: var(--serif); font-size: 22px; color: var(--bright); text-decoration: none; }
   .nav-links { display: flex; gap: 28px; }
-  .nav-links a {
-    font-size: 10px; letter-spacing: 0.22em;
-    color: var(--dim); text-decoration: none;
-    text-transform: uppercase; transition: color 0.3s;
-    cursor: crosshair;
-  }
+  .nav-links a { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); text-decoration: none; text-transform: uppercase; transition: color 0.3s; cursor: crosshair; }
   .nav-links a:hover { color: var(--mid); }
 
   /* ── HERO ── */
-  #hero {
-    min-height: 100vh;
-    padding: 140px clamp(24px, 7vw, 110px) 80px;
-    display: flex; flex-direction: column; justify-content: center;
-    position: relative;
-  }
-  .hero-tag {
-    font-size: 10px; letter-spacing: 0.3em;
-    color: var(--dim); margin-bottom: 52px;
-    opacity: 0; animation: fadeUp 1s ease 0.2s forwards;
-  }
-  .hero-h1 {
-    font-family: var(--serif);
-    font-size: clamp(44px, 7.5vw, 104px);
-    font-weight: 400; line-height: 1.06;
-    color: var(--bright); letter-spacing: -0.02em;
-    margin-bottom: 28px;
-    opacity: 0; animation: fadeUp 1s ease 0.4s forwards;
-  }
+  #hero { min-height: 100vh; padding: 140px clamp(24px,7vw,110px) 80px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+  .hero-tag  { font-size: 10px; letter-spacing: 0.3em; color: var(--dim); margin-bottom: 52px; opacity: 0; animation: fadeUp 1s ease 0.2s forwards; }
+  .hero-h1   { font-family: var(--serif); font-size: clamp(44px,7.5vw,104px); font-weight: 400; line-height: 1.06; color: var(--bright); letter-spacing: -0.02em; margin-bottom: 28px; opacity: 0; animation: fadeUp 1s ease 0.4s forwards; }
   .hero-h1 em { font-style: italic; color: var(--accent); }
-  .hero-rule {
-    width: 36px; height: 1px; background: var(--line2);
-    margin: 36px 0;
-    opacity: 0; animation: fadeUp 1s ease 0.55s forwards;
-  }
-  .hero-sub {
-    font-size: 12px; color: var(--mid);
-    line-height: 2.1; letter-spacing: 0.07em;
-    max-width: 400px; margin-bottom: 60px;
-    opacity: 0; animation: fadeUp 1s ease 0.65s forwards;
-  }
-  .hero-cta {
-    opacity: 0; animation: fadeUp 1s ease 0.8s forwards;
-  }
-  .btn {
-    display: inline-block;
-    background: transparent;
-    border: 1px solid var(--line2);
-    color: var(--mid);
-    padding: 14px 40px;
-    font-family: var(--mono);
-    font-size: 11px; letter-spacing: 0.22em;
-    text-transform: uppercase; text-decoration: none;
-    cursor: crosshair; transition: all 0.3s;
-  }
-  .btn:hover { border-color: var(--mid); color: var(--bright); background: var(--bg2); }
-
-  .hero-coords {
-    position: absolute;
-    right: clamp(24px, 7vw, 110px); bottom: 72px;
-    text-align: right;
-    opacity: 0; animation: fadeUp 1s ease 1s forwards;
-  }
+  .hero-rule { width: 36px; height: 1px; background: var(--line2); margin: 36px 0; opacity: 0; animation: fadeUp 1s ease 0.55s forwards; }
+  .hero-sub  { font-size: 12px; color: var(--mid); line-height: 2.1; letter-spacing: 0.07em; max-width: 400px; margin-bottom: 60px; opacity: 0; animation: fadeUp 1s ease 0.65s forwards; }
+  .hero-cta  { opacity: 0; animation: fadeUp 1s ease 0.8s forwards; }
+  .hero-coords { position: absolute; right: clamp(24px,7vw,110px); bottom: 72px; text-align: right; opacity: 0; animation: fadeUp 1s ease 1s forwards; }
   .hero-coords p { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); line-height: 2; }
-
-  .hero-scroll {
-    position: absolute;
-    left: clamp(24px, 7vw, 110px); bottom: 72px;
-    opacity: 0; animation: fadeUp 1s ease 1s forwards;
-  }
+  .hero-scroll { position: absolute; left: clamp(24px,7vw,110px); bottom: 72px; opacity: 0; animation: fadeUp 1s ease 1s forwards; }
   .hero-scroll p { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  .btn { display: inline-block; background: transparent; border: 1px solid var(--line2); color: var(--mid); padding: 14px 40px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; cursor: crosshair; transition: all 0.3s; }
+  .btn:hover { border-color: var(--mid); color: var(--bright); background: var(--bg2); }
 
   /* ── TICKER ── */
-  .ticker-wrap {
-    overflow: hidden;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    padding: 11px 0;
-    background: var(--bg);
-  }
-  .ticker-track {
-    display: flex; gap: 56px; white-space: nowrap;
-    width: max-content;
-    animation: ticker 24s linear infinite;
-  }
-  .ticker-track span {
-    font-size: 11px; letter-spacing: 0.16em; color: var(--dim);
-  }
-  @keyframes ticker {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
+  .ticker-wrap { overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 11px 0; background: var(--bg); }
+  .ticker-track { display: flex; gap: 56px; white-space: nowrap; width: max-content; animation: ticker 24s linear infinite; }
+  .ticker-track span { font-size: 11px; letter-spacing: 0.16em; color: var(--dim); }
 
   /* ── INPUT FLOW ── */
-  #input-flow {
-    min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 80px clamp(24px, 7vw, 110px);
-    border-top: 1px solid var(--line);
-  }
-  .form-inner { width: 100%; max-width: 620px; }
+  #input-flow { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px clamp(24px,7vw,110px); border-top: 1px solid var(--line); }
+  .form-inner { width: 100%; max-width: 640px; }
 
   .step-bars { display: flex; gap: 8px; margin-bottom: 72px; }
-  .step-bar {
-    height: 1px; flex: 1;
-    background: var(--line);
-    transition: background 0.5s;
-  }
-  .step-bar.done { background: var(--mid); }
+  .step-bar  { height: 1px; flex: 1; background: var(--line); transition: background 0.5s; }
+  .step-bar.done   { background: var(--mid); }
   .step-bar.active { background: var(--accent); }
 
-  .form-tag {
-    font-size: 10px; letter-spacing: 0.28em;
-    color: var(--dim); margin-bottom: 52px;
-    min-height: 16px;
-  }
-  .form-label {
-    display: block; font-size: 11px;
-    letter-spacing: 0.2em; color: var(--mid);
-    margin-bottom: 18px; text-transform: uppercase;
-  }
+  .form-tag   { font-size: 10px; letter-spacing: 0.28em; color: var(--dim); margin-bottom: 52px; min-height: 16px; }
+  .form-label { display: block; font-size: 11px; letter-spacing: 0.2em; color: var(--mid); margin-bottom: 18px; text-transform: uppercase; }
+
   .form-input {
-    width: 100%; background: transparent;
-    border: none; border-bottom: 1px solid var(--line2);
-    color: var(--bright);
-    font-family: var(--serif); font-size: clamp(28px, 4.5vw, 56px);
-    font-weight: 400; padding: 14px 0;
-    outline: none; letter-spacing: -0.01em;
-    transition: border-color 0.3s;
-    caret-color: var(--accent);
+    width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line2);
+    color: var(--bright); font-family: var(--serif); font-size: clamp(28px,4.5vw,56px);
+    font-weight: 400; padding: 14px 0; outline: none; letter-spacing: -0.01em;
+    transition: border-color 0.3s; caret-color: var(--accent);
   }
   .form-input:focus { border-bottom-color: var(--mid); }
   .form-input::placeholder { color: var(--line2); }
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.25); cursor: crosshair; }
 
-  .form-actions {
-    margin-top: 52px; display: flex;
-    align-items: center; gap: 28px;
+  /* City dropdown */
+  .city-select {
+    width: 100%; background: var(--bg2); border: none; border-bottom: 1px solid var(--line2);
+    color: var(--bright); font-family: var(--serif); font-size: clamp(22px,3.5vw,42px);
+    font-weight: 400; padding: 14px 0; outline: none; transition: border-color 0.3s;
+    cursor: crosshair; appearance: none; -webkit-appearance: none;
   }
-  .form-skip {
-    font-size: 10px; letter-spacing: 0.2em;
-    color: var(--line2); cursor: crosshair;
-    transition: color 0.3s; background: none;
-    border: none; font-family: var(--mono);
-    text-transform: uppercase;
-  }
+  .city-select:focus { border-bottom-color: var(--mid); }
+  .city-select option { background: #111; color: var(--text); font-family: var(--mono); font-size: 14px; }
+
+  .form-actions { margin-top: 52px; display: flex; align-items: center; gap: 28px; }
+  .form-skip { font-size: 10px; letter-spacing: 0.2em; color: var(--line2); cursor: crosshair; transition: color 0.3s; background: none; border: none; font-family: var(--mono); text-transform: uppercase; }
   .form-skip:hover { color: var(--dim); }
 
-  /* scanning state */
-  .scanning { display: none; }
-  .scanning.active { display: block; }
-  .scanning-row { margin-bottom: 20px; }
-  .scanning-row .s-key { font-size: 11px; letter-spacing: 0.2em; color: var(--dim); margin-right: 18px; }
-  .scanning-row .s-val { font-family: var(--serif); font-size: 20px; color: var(--mid); }
+  /* ── LOADING ── */
+  #loadingState { display: none; }
+  #loadingState.active { display: block; }
 
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-  .blink { animation: blink 1s infinite; }
+  .loading-tag { font-size: 10px; letter-spacing: 0.28em; color: var(--accent); margin-bottom: 48px; animation: blink 1.2s infinite; }
+  .loading-msg { font-family: var(--serif); font-size: clamp(20px,3vw,38px); color: var(--mid); line-height: 1.4; margin-bottom: 48px; min-height: 56px; transition: opacity 0.4s; }
+  .loading-bar-wrap { width: 100%; height: 1px; background: var(--line2); margin-bottom: 40px; overflow: hidden; }
+  .loading-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s ease; }
+  .loading-log { font-size: 11px; color: var(--dim); line-height: 2.4; }
+  .log-line { opacity: 0; transition: opacity 0.5s; }
+  .log-line.show { opacity: 1; }
 
-  /* completed */
-  .form-done { display: none; }
-  .form-done.active { display: block; animation: fadeUp 0.7s ease; }
+  /* ── REPORT ── */
+  #reportState { display: none; }
+  #reportState.active { display: block; animation: slideUp 0.7s ease; }
+
+  .report-meta { font-size: 10px; letter-spacing: 0.25em; color: var(--dim); margin-bottom: 24px; }
+  .report-divider { width: 100%; height: 1px; background: var(--line); margin: 36px 0; }
+  .report-name { font-family: var(--serif); font-size: clamp(28px,4vw,52px); font-weight: 400; color: var(--bright); line-height: 1.2; margin-bottom: 8px; }
+
+  .report-section { margin-bottom: 0; animation: slideUp 0.6s ease backwards; }
+  .report-section-label { font-size: 10px; letter-spacing: 0.28em; color: var(--dim); margin-bottom: 16px; text-transform: uppercase; }
+  .report-section-text  { font-size: 13px; color: var(--text); line-height: 2.3; border-left: 1px solid var(--line2); padding-left: 24px; white-space: pre-wrap; word-break: break-word; }
+
+  .report-restart { margin-top: 64px; display: inline-block; background: transparent; border: 1px solid var(--line2); color: var(--dim); padding: 12px 32px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; cursor: crosshair; transition: all 0.3s; }
+  .report-restart:hover { border-color: var(--mid); color: var(--mid); }
+
+  /* ── ERROR ── */
+  #errorState { display: none; }
+  #errorState.active { display: block; animation: slideUp 0.5s ease; }
+
+  .error-tag  { font-size: 10px; letter-spacing: 0.28em; color: var(--red2); margin-bottom: 40px; animation: blink 2s infinite; }
+  .error-code { font-family: var(--serif); font-size: clamp(24px,3.5vw,48px); color: var(--red2); margin-bottom: 24px; }
+  .error-body { border-left: 2px solid var(--red); padding-left: 24px; margin-bottom: 48px; }
+  .error-msg  { font-size: 12px; color: var(--mid); line-height: 2.2; }
+  .error-actions { display: flex; gap: 16px; flex-wrap: wrap; }
 
   /* ── LOGIC ── */
-  #logic {
-    padding: 120px clamp(24px, 7vw, 110px);
-    border-top: 1px solid var(--line);
-  }
-  .logic-tag {
-    font-size: 10px; letter-spacing: 0.3em;
-    color: var(--dim); margin-bottom: 68px;
-  }
-  .logic-h2 {
-    font-family: var(--serif);
-    font-size: clamp(30px, 4.5vw, 60px);
-    font-weight: 400; color: var(--bright);
-    line-height: 1.14; max-width: 600px;
-    margin-bottom: 96px; letter-spacing: -0.02em;
-  }
+  #logic { padding: 120px clamp(24px,7vw,110px); border-top: 1px solid var(--line); }
+  .logic-tag { font-size: 10px; letter-spacing: 0.3em; color: var(--dim); margin-bottom: 68px; }
+  .logic-h2  { font-family: var(--serif); font-size: clamp(30px,4.5vw,60px); font-weight: 400; color: var(--bright); line-height: 1.14; max-width: 600px; margin-bottom: 96px; letter-spacing: -0.02em; }
   .logic-h2 em { font-style: italic; color: var(--mid); }
-
-  .logic-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1px; background: var(--line);
-    border: 1px solid var(--line);
-    margin-bottom: 80px;
-  }
-  .logic-card {
-    background: var(--bg);
-    padding: 48px 40px;
-    transition: background 0.3s;
-  }
+  .logic-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 80px; }
+  .logic-card { background: var(--bg); padding: 48px 40px; transition: background 0.3s; }
   .logic-card:hover { background: var(--bg2); }
-  .logic-num {
-    font-size: 10px; letter-spacing: 0.3em;
-    color: var(--line2); margin-bottom: 36px;
-  }
-  .logic-title {
-    font-family: var(--serif);
-    font-size: 20px; font-weight: 400;
-    color: var(--accent); margin-bottom: 20px;
-    line-height: 1.35;
-  }
-  .logic-body {
-    font-size: 12px; color: var(--dim);
-    line-height: 2.1;
-  }
-
-  .logic-formula {
-    border-top: 1px solid var(--line);
-    padding-top: 40px;
-  }
-  .logic-formula p {
-    font-size: 11px; color: var(--line2);
-    letter-spacing: 0.12em; line-height: 2.2;
-  }
+  .logic-num   { font-size: 10px; letter-spacing: 0.3em; color: var(--line2); margin-bottom: 36px; }
+  .logic-title { font-family: var(--serif); font-size: 20px; font-weight: 400; color: var(--accent); margin-bottom: 20px; line-height: 1.35; }
+  .logic-body  { font-size: 12px; color: var(--dim); line-height: 2.1; }
+  .logic-formula { border-top: 1px solid var(--line); padding-top: 40px; }
+  .logic-formula p { font-size: 11px; color: var(--line2); letter-spacing: 0.12em; line-height: 2.2; }
 
   /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--line);
-    padding: 64px clamp(24px, 7vw, 110px);
-  }
-  .footer-inner {
-    display: flex; justify-content: space-between;
-    align-items: flex-end; flex-wrap: wrap; gap: 44px;
-  }
-  .footer-logo {
-    font-family: var(--serif); font-size: 28px;
-    color: var(--dim); margin-bottom: 28px;
-  }
-  .footer-info {
-    font-size: 11px; color: var(--dim);
-    line-height: 2.2; letter-spacing: 0.06em;
-  }
+  footer { border-top: 1px solid var(--line); padding: 64px clamp(24px,7vw,110px); }
+  .footer-inner { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 44px; }
+  .footer-logo  { font-family: var(--serif); font-size: 28px; color: var(--dim); margin-bottom: 28px; }
+  .footer-info  { font-size: 11px; color: var(--dim); line-height: 2.2; letter-spacing: 0.06em; }
   .footer-right { text-align: right; }
-  .footer-yt {
-    display: inline-block;
-    font-size: 11px; letter-spacing: 0.2em;
-    color: var(--dim); text-decoration: none;
-    text-transform: uppercase;
-    margin-bottom: 20px; transition: color 0.3s;
-  }
+  .footer-yt    { display: inline-block; font-size: 11px; letter-spacing: 0.2em; color: var(--dim); text-decoration: none; text-transform: uppercase; margin-bottom: 20px; transition: color 0.3s; }
   .footer-yt:hover { color: var(--mid); }
-  .footer-copy {
-    font-size: 10px; color: var(--line2);
-    letter-spacing: 0.15em;
-  }
+  .footer-copy  { font-size: 10px; color: var(--line2); letter-spacing: 0.15em; }
 </style>
 </head>
 <body>
@@ -346,73 +194,68 @@
 <!-- HERO -->
 <section id="hero">
   <p class="hero-tag">BZR / ASTROLOGICAL INTELLIGENCE SYSTEM v1.0</p>
-  <h1 class="hero-h1">
-    데이터로<br>
-    <em>납득하는</em><br>
-    전략적 점성술
-  </h1>
+  <h1 class="hero-h1">데이터로<br><em>납득하는</em><br>전략적 점성술</h1>
   <div class="hero-rule"></div>
-  <p class="hero-sub">
-    감성이 아닌 수학.<br>
-    직감이 아닌 구조.<br>
-    IQ 151의 분석 엔진이 당신의 차트를 해킹합니다.
-  </p>
-  <div class="hero-cta">
-    <a href="#input-flow" class="btn">분석 시작 →</a>
-  </div>
-  <div class="hero-coords">
-    <p>37.5665° N / 126.9780° E</p>
-    <p>KERNEL ACTIVE</p>
-  </div>
+  <p class="hero-sub">감성이 아닌 수학.<br>직감이 아닌 구조.<br>IQ 151의 분석 엔진이 당신의 차트를 해킹합니다.</p>
+  <div class="hero-cta"><a href="#input-flow" class="btn">분석 시작 →</a></div>
+  <div class="hero-coords"><p>37.5665° N / 126.9780° E</p><p>KERNEL ACTIVE</p></div>
   <div class="hero-scroll"><p>SCROLL ↓</p></div>
 </section>
 
-<!-- TICKER -->
-<div class="ticker-wrap" id="ticker1">
-  <div class="ticker-track" id="tickerTrack"></div>
-</div>
+<!-- TICKER 1 -->
+<div class="ticker-wrap"><div class="ticker-track" id="t1"></div></div>
 
 <!-- INPUT FLOW -->
 <section id="input-flow">
   <div class="form-inner">
 
-    <!-- Progress bars -->
-    <div class="step-bars" id="stepBars">
+    <div class="step-bars">
       <div class="step-bar active" id="bar0"></div>
       <div class="step-bar" id="bar1"></div>
       <div class="step-bar" id="bar2"></div>
       <div class="step-bar" id="bar3"></div>
     </div>
 
-    <!-- Normal input state -->
-    <div id="formState">
+    <!-- INPUT -->
+    <div id="inputState">
       <p class="form-tag" id="formTag">INPUT 1/4 / 분석 대상 초기화 중...</p>
       <label class="form-label" id="formLabel">식별자</label>
-      <input class="form-input" id="formInput" type="text" placeholder="성명을 입력하세요" autocomplete="off">
+      <input  class="form-input"  id="formInput"  type="text" placeholder="성명을 입력하세요" autocomplete="off">
+      <select class="city-select" id="citySelect" style="display:none"></select>
       <div class="form-actions">
         <button class="btn" id="nextBtn" onclick="advance()">다음 →</button>
-        <button class="form-skip" id="skipBtn" style="display:none" onclick="advance(true)">건너뛰기 (Enter)</button>
+        <button class="form-skip" id="skipBtn" style="display:none" onclick="advance(true)">건너뛰기</button>
       </div>
     </div>
 
-    <!-- Scanning state -->
-    <div class="scanning" id="scanState">
-      <p class="form-tag blink">▌ 차트 파싱 중...</p>
-      <div class="scanning-row"><span class="s-key">NAME</span><span class="s-val" id="sv-name">—</span></div>
-      <div class="scanning-row"><span class="s-key">BIRTH</span><span class="s-val" id="sv-birth">—</span></div>
-      <div class="scanning-row"><span class="s-key">TIME</span><span class="s-val" id="sv-time">—</span></div>
-      <div class="scanning-row"><span class="s-key">CITY</span><span class="s-val" id="sv-city">—</span></div>
+    <!-- LOADING -->
+    <div id="loadingState">
+      <p class="loading-tag">▌ PROCESSING...</p>
+      <p class="loading-msg" id="loadingMsg">버프가이 알고리즘이 당신의 운명을 해킹 중입니다...</p>
+      <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+      <div class="loading-log" id="loadingLog"></div>
     </div>
 
-    <!-- Done state -->
-    <div class="form-done" id="doneState">
-      <p class="form-tag">분석 완료 / ANALYSIS COMPLETE</p>
-      <h2 style="font-family:var(--serif);font-size:clamp(28px,4vw,52px);font-weight:400;color:var(--bright);line-height:1.2;margin-bottom:24px;">
-        <span id="doneName"></span>님의 차트가<br>파싱되었습니다.
-      </h2>
-      <p style="font-size:12px;color:var(--dim);line-height:2.1;">
-        결과 보고서는 준비되는 즉시<br>개인적으로 전달됩니다.
-      </p>
+    <!-- REPORT -->
+    <div id="reportState">
+      <p class="report-meta" id="reportMeta">ANALYSIS COMPLETE / BZR ENGINE v1.0</p>
+      <h2 class="report-name"><span id="reportName"></span>님의<br>전략 리포트</h2>
+      <div class="report-divider"></div>
+      <div id="reportSections"></div>
+      <button class="report-restart" onclick="resetForm()">↺ 새 분석 시작</button>
+    </div>
+
+    <!-- ERROR -->
+    <div id="errorState">
+      <p class="error-tag">▌ TRANSMISSION ERROR</p>
+      <p class="error-code">데이터 전송 오류.</p>
+      <div class="error-body">
+        <p class="error-msg">서버와의 연결이 끊겼습니다.<br>네트워크 상태를 확인하고 다시 시도하십시오.</p>
+      </div>
+      <div class="error-actions">
+        <button class="btn" onclick="retrySubmit()">다시 시도 →</button>
+        <button class="report-restart" onclick="resetForm()">처음으로</button>
+      </div>
     </div>
 
   </div>
@@ -421,188 +264,421 @@
 <!-- LOGIC -->
 <section id="logic">
   <p class="logic-tag">SYSTEM ARCHITECTURE / 분석 엔진 구조</p>
-  <h2 class="logic-h2">
-    IQ 151의 엔진이<br>
-    당신의 차트를<br>
-    <em>어떻게 해킹하는가</em>
-  </h2>
-
+  <h2 class="logic-h2">IQ 151의 엔진이<br>당신의 차트를<br><em>어떻게 해킹하는가</em></h2>
   <div class="logic-grid">
-    <div class="logic-card">
-      <p class="logic-num">01</p>
-      <h3 class="logic-title">출생 차트 구조 분석</h3>
-      <p class="logic-body">행성의 위치, 하우스 배치, 어스펙트 각도를 수학적으로 파싱합니다. 감이 아닌 0.1도 단위의 정밀 계산입니다.</p>
-    </div>
-    <div class="logic-card">
-      <p class="logic-num">02</p>
-      <h3 class="logic-title">패턴 식별 엔진</h3>
-      <p class="logic-body">수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다. 통계적으로 유의미한 배치만 보고합니다.</p>
-    </div>
-    <div class="logic-card">
-      <p class="logic-num">03</p>
-      <h3 class="logic-title">전략 변수 도출</h3>
-      <p class="logic-body">에너지 피크 주기, 의사결정 최적 타이밍, 관계 역학 구조를 수치화된 전략 보고서로 출력합니다.</p>
-    </div>
+    <div class="logic-card"><p class="logic-num">01</p><h3 class="logic-title">출생 차트 구조 분석</h3><p class="logic-body">행성의 위치, 하우스 배치, 어스펙트 각도를 수학적으로 파싱합니다. 감이 아닌 0.1도 단위의 정밀 계산입니다.</p></div>
+    <div class="logic-card"><p class="logic-num">02</p><h3 class="logic-title">패턴 식별 엔진</h3><p class="logic-body">수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다. 통계적으로 유의미한 배치만 보고합니다.</p></div>
+    <div class="logic-card"><p class="logic-num">03</p><h3 class="logic-title">전략 변수 도출</h3><p class="logic-body">에너지 피크 주기, 의사결정 최적 타이밍, 관계 역학 구조를 수치화된 전략 보고서로 출력합니다.</p></div>
   </div>
-
   <div class="logic-formula">
-    <p>
-      ASC = arctan(cos(ε)·sin(RAMC) / (cos(RAMC)·sin(φ) − tan(δ)·cos(φ)))<br>
-      MC  = arctan(tan(RAMC) / cos(ε)) &nbsp;|&nbsp; BIAS: NONE &nbsp;|&nbsp; METHOD: PLACIDUS
-    </p>
+    <p>ASC = arctan(cos(ε)·sin(RAMC) / (cos(RAMC)·sin(φ) − tan(δ)·cos(φ)))<br>MC = arctan(tan(RAMC) / cos(ε)) &nbsp;|&nbsp; BIAS: NONE &nbsp;|&nbsp; METHOD: PLACIDUS</p>
   </div>
 </section>
 
 <!-- TICKER 2 -->
-<div class="ticker-wrap">
-  <div class="ticker-track" id="tickerTrack2"></div>
-</div>
+<div class="ticker-wrap"><div class="ticker-track" id="t2"></div></div>
 
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div>
       <p class="footer-logo">BZR</p>
-      <p class="footer-info">
-        상호: BZR ASTROLOGICAL LAB<br>
-        사업자등록번호: 000-00-00000<br>
-        통신판매업: 제 0000-서울-00000호<br>
-        대표: 버프가이 &nbsp;|&nbsp; contact@bzr.kr
-      </p>
+      <p class="footer-info">상호: BZR ASTROLOGICAL LAB<br>사업자등록번호: 000-00-00000<br>통신판매업: 제 0000-서울-00000호<br>대표: 버프가이 &nbsp;|&nbsp; contact@bzr.kr</p>
     </div>
     <div class="footer-right">
-      <a class="footer-yt" href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">
-        YOUTUBE / 버프가이 ↗
-      </a>
+      <a class="footer-yt" href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">YOUTUBE / 버프가이 ↗</a>
       <p class="footer-copy">© 2025 BZR ALL RIGHTS RESERVED</p>
     </div>
   </div>
 </footer>
 
 <script>
-// ── TICKER SETUP ──────────────────────────────────────────────────────────────
-const TICKER_ITEMS = [
-  "// ASC 계산 완료","// 목성 합 상승점 감지","// 토성 리턴 분석 중",
-  "// 12하우스 스텔리엄 확인","// N.Node 역행 패턴","// 카이런 궁위 처리 중",
-  "// MC-IC 축 최적화","// 일식 트랜짓 대입 완료","// 드래곤 헤드 계산",
-  "// 달 위상 사이클 매핑","// 하우스 커스프 정렬"
-];
-function buildTicker(id) {
-  const el = document.getElementById(id);
-  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
-  el.innerHTML = doubled.map(t => `<span>${t}</span>`).join('');
-}
-buildTicker('tickerTrack');
-buildTicker('tickerTrack2');
+'use strict';
 
-// ── FORM LOGIC ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// 1. CITY COORDINATE DATABASE
+// ═══════════════════════════════════════════════════════════════════
+const CITIES = [
+  // 한국
+  { name:"서울",        label:"서울 (Seoul)",            lat:"37.5665",  lng:"126.9780" },
+  { name:"부산",        label:"부산 (Busan)",             lat:"35.1796",  lng:"129.0756" },
+  { name:"인천",        label:"인천 (Incheon)",           lat:"37.4563",  lng:"126.7052" },
+  { name:"대구",        label:"대구 (Daegu)",             lat:"35.8714",  lng:"128.6014" },
+  { name:"대전",        label:"대전 (Daejeon)",           lat:"36.3504",  lng:"127.3845" },
+  { name:"광주",        label:"광주 (Gwangju)",           lat:"35.1595",  lng:"126.8526" },
+  { name:"울산",        label:"울산 (Ulsan)",             lat:"35.5384",  lng:"129.3114" },
+  { name:"수원",        label:"수원 (Suwon)",             lat:"37.2636",  lng:"127.0286" },
+  { name:"청주",        label:"청주 (Cheongju)",          lat:"36.6424",  lng:"127.4890" },
+  { name:"전주",        label:"전주 (Jeonju)",            lat:"35.8242",  lng:"127.1480" },
+  { name:"창원",        label:"창원 (Changwon)",          lat:"35.2279",  lng:"128.6811" },
+  { name:"제주",        label:"제주 (Jeju)",              lat:"33.4996",  lng:"126.5312" },
+  // 동아시아
+  { name:"도쿄",        label:"도쿄 (Tokyo)",             lat:"35.6762",  lng:"139.6503" },
+  { name:"오사카",      label:"오사카 (Osaka)",           lat:"34.6937",  lng:"135.5023" },
+  { name:"베이징",      label:"베이징 (Beijing)",         lat:"39.9042",  lng:"116.4074" },
+  { name:"상하이",      label:"상하이 (Shanghai)",        lat:"31.2304",  lng:"121.4737" },
+  { name:"홍콩",        label:"홍콩 (Hong Kong)",         lat:"22.3193",  lng:"114.1694" },
+  { name:"타이페이",    label:"타이페이 (Taipei)",        lat:"25.0330",  lng:"121.5654" },
+  // 동남아
+  { name:"싱가포르",    label:"싱가포르 (Singapore)",     lat:"1.3521",   lng:"103.8198" },
+  { name:"방콕",        label:"방콕 (Bangkok)",           lat:"13.7563",  lng:"100.5018" },
+  { name:"자카르타",    label:"자카르타 (Jakarta)",       lat:"-6.2088",  lng:"106.8456" },
+  { name:"하노이",      label:"하노이 (Hanoi)",           lat:"21.0285",  lng:"105.8542" },
+  // 유럽
+  { name:"런던",        label:"런던 (London)",            lat:"51.5074",  lng:"-0.1278"  },
+  { name:"파리",        label:"파리 (Paris)",             lat:"48.8566",  lng:"2.3522"   },
+  { name:"베를린",      label:"베를린 (Berlin)",          lat:"52.5200",  lng:"13.4050"  },
+  { name:"로마",        label:"로마 (Rome)",              lat:"41.9028",  lng:"12.4964"  },
+  { name:"마드리드",    label:"마드리드 (Madrid)",        lat:"40.4168",  lng:"-3.7038"  },
+  { name:"바르셀로나",  label:"바르셀로나 (Barcelona)",   lat:"41.3851",  lng:"2.1734"   },
+  { name:"암스테르담",  label:"암스테르담 (Amsterdam)",   lat:"52.3676",  lng:"4.9041"   },
+  { name:"빈",          label:"빈 (Vienna)",              lat:"48.2082",  lng:"16.3738"  },
+  { name:"취리히",      label:"취리히 (Zurich)",          lat:"47.3769",  lng:"8.5417"   },
+  // 미주
+  { name:"뉴욕",        label:"뉴욕 (New York)",          lat:"40.7128",  lng:"-74.0060" },
+  { name:"로스앤젤레스",label:"로스앤젤레스 (LA)",        lat:"34.0522",  lng:"-118.2437"},
+  { name:"시카고",      label:"시카고 (Chicago)",         lat:"41.8781",  lng:"-87.6298" },
+  { name:"샌프란시스코",label:"샌프란시스코 (SF)",        lat:"37.7749",  lng:"-122.4194"},
+  { name:"워싱턴DC",    label:"워싱턴DC (Washington DC)", lat:"38.9072",  lng:"-77.0369" },
+  { name:"토론토",      label:"토론토 (Toronto)",         lat:"43.6532",  lng:"-79.3832" },
+  { name:"밴쿠버",      label:"밴쿠버 (Vancouver)",       lat:"49.2827",  lng:"-123.1207"},
+  { name:"상파울루",    label:"상파울루 (São Paulo)",     lat:"-23.5505", lng:"-46.6333" },
+  // 기타
+  { name:"시드니",      label:"시드니 (Sydney)",          lat:"-33.8688", lng:"151.2093" },
+  { name:"멜버른",      label:"멜버른 (Melbourne)",       lat:"-37.8136", lng:"144.9631" },
+  { name:"두바이",      label:"두바이 (Dubai)",           lat:"25.2048",  lng:"55.2708"  },
+  { name:"뭄바이",      label:"뭄바이 (Mumbai)",          lat:"19.0760",  lng:"72.8777"  },
+  { name:"델리",        label:"델리 (Delhi)",             lat:"28.6139",  lng:"77.2090"  },
+  { name:"모스크바",    label:"모스크바 (Moscow)",        lat:"55.7558",  lng:"37.6173"  },
+  { name:"이스탄불",    label:"이스탄불 (Istanbul)",      lat:"41.0082",  lng:"28.9784"  },
+  { name:"카이로",      label:"카이로 (Cairo)",           lat:"30.0444",  lng:"31.2357"  },
+  { name:"요하네스버그",label:"요하네스버그 (Joburg)",    lat:"-26.2041", lng:"28.0473"  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. CONFIG
+// ═══════════════════════════════════════════════════════════════════
+const MAKE_WEBHOOK = 'https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0';
+
 const STEPS = [
-  { id:"name",  label:"식별자",    placeholder:"성명을 입력하세요",    type:"text", hint:"분석 대상 초기화 중...", skippable:false },
-  { id:"birth", label:"출생 데이터", placeholder:"YYYY-MM-DD",        type:"date", hint:"항성력 데이터베이스 조회 중...", skippable:false },
-  { id:"time",  label:"출생 시각",  placeholder:"HH:MM (모르면 건너뛰기)", type:"time", hint:"천구 좌표 계산 중...", skippable:true },
-  { id:"city",  label:"출생지",    placeholder:"도시명 (예: Seoul)",  type:"text", hint:"지리 좌표 매핑 중...", skippable:false },
+  { id:'name',  label:'식별자',      type:'text',   placeholder:'성명을 입력하세요',  hint:'분석 대상 초기화 중...',         skippable:false, useSelect:false },
+  { id:'birth', label:'출생 데이터', type:'date',   placeholder:'생년월일 선택',       hint:'항성력 데이터베이스 조회 중...', skippable:false, useSelect:false },
+  { id:'time',  label:'출생 시각',   type:'time',   placeholder:'HH:MM',              hint:'천구 좌표 계산 중...',            skippable:true,  useSelect:false },
+  { id:'city',  label:'출생지',      type:'select', placeholder:'도시를 선택하세요',   hint:'지리 좌표 매핑 중...',            skippable:false, useSelect:true  },
 ];
 
+const LOADING_MSGS = [
+  '버프가이 알고리즘이 당신의 운명을 해킹 중입니다...',
+  '행성 좌표와 당신의 출생 데이터를 교차 분석 중...',
+  'IQ 151 엔진이 차트 구조를 냉정하게 파괴하는 중...',
+  '패턴 매트릭스를 재조립하는 중...',
+  '전략 변수를 수치화하는 중...',
+  '최종 리포트를 컴파일하는 중...',
+];
+
+const LOG_LINES = [
+  '// 출생 좌표 매핑 완료',
+  '// 항성력 데이터베이스 조회 중...',
+  '// ASC / MC 정밀 계산 중...',
+  '// 행성 배치 파싱 중...',
+  '// 하우스 커스프 정렬 완료',
+  '// 패턴 식별 엔진 가동...',
+  '// 전략 변수 도출 완료 — 리포트 생성 중...',
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. STATE
+// ═══════════════════════════════════════════════════════════════════
 let currentStep = 0;
-const formData = { name:"", birth:"", time:"", city:"" };
+const formData  = { name:'', birth:'', time:'', city:'', lat:'', lng:'' };
+let loaderTimers = [];
 
-const formInput  = document.getElementById('formInput');
-const formTag    = document.getElementById('formTag');
-const formLabel  = document.getElementById('formLabel');
-const nextBtn    = document.getElementById('nextBtn');
-const skipBtn    = document.getElementById('skipBtn');
-const formState  = document.getElementById('formState');
-const scanState  = document.getElementById('scanState');
-const doneState  = document.getElementById('doneState');
+// ═══════════════════════════════════════════════════════════════════
+// 4. DOM
+// ═══════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const inputState   = $('inputState');
+const loadingState = $('loadingState');
+const reportState  = $('reportState');
+const errorState   = $('errorState');
+const formInput    = $('formInput');
+const citySelect   = $('citySelect');
+const formTag      = $('formTag');
+const formLabel    = $('formLabel');
+const nextBtn      = $('nextBtn');
+const skipBtn      = $('skipBtn');
+const loadingMsg   = $('loadingMsg');
+const loadingBar   = $('loadingBar');
+const loadingLog   = $('loadingLog');
 
-formInput.addEventListener('keydown', e => { if (e.key === 'Enter') advance(); });
+// ═══════════════════════════════════════════════════════════════════
+// 5. TICKER
+// ═══════════════════════════════════════════════════════════════════
+const TICKS = ['// ASC 계산 완료','// 목성 합 상승점 감지','// 토성 리턴 분석 중','// 12하우스 스텔리엄 확인','// N.Node 역행 패턴','// 카이런 궁위 처리 중','// MC-IC 축 최적화','// 일식 트랜짓 대입 완료','// 드래곤 헤드 계산','// 달 위상 사이클 매핑','// 하우스 커스프 정렬'];
+['t1','t2'].forEach(id => {
+  $( id).innerHTML = [...TICKS,...TICKS].map(t=>`<span>${t}</span>`).join('');
+});
 
+// ═══════════════════════════════════════════════════════════════════
+// 6. CITY SELECT POPULATE
+// ═══════════════════════════════════════════════════════════════════
+citySelect.innerHTML = '<option value="">— 도시를 선택하세요 —</option>';
+CITIES.forEach(c => {
+  const o = document.createElement('option');
+  o.value = c.name; o.textContent = c.label;
+  citySelect.appendChild(o);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. FORM
+// ═══════════════════════════════════════════════════════════════════
 function updateBars() {
-  STEPS.forEach((_, i) => {
-    const bar = document.getElementById('bar' + i);
-    bar.className = 'step-bar' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+  STEPS.forEach((_,i) => {
+    $('bar'+i).className = 'step-bar' + (i<currentStep?' done':i===currentStep?' active':'');
   });
 }
 
 function renderStep() {
   const s = STEPS[currentStep];
-  formTag.textContent = `INPUT ${currentStep+1}/4 / ${s.hint}`;
+  formTag.textContent   = `INPUT ${currentStep+1}/4 / ${s.hint}`;
   formLabel.textContent = s.label;
-  formInput.type = s.type;
-  formInput.placeholder = s.placeholder;
-  formInput.value = '';
+  if (s.useSelect) {
+    formInput.style.display  = 'none';
+    citySelect.style.display = 'block';
+    citySelect.value = '';
+  } else {
+    formInput.style.display  = 'block';
+    citySelect.style.display = 'none';
+    formInput.type        = s.type;
+    formInput.placeholder = s.placeholder;
+    formInput.value       = '';
+  }
   skipBtn.style.display = s.skippable ? 'inline-block' : 'none';
-  nextBtn.textContent = currentStep < STEPS.length - 1 ? '다음 →' : '분석 실행 →';
+  nextBtn.textContent   = currentStep < STEPS.length-1 ? '다음 →' : '분석 실행 →';
   updateBars();
-  setTimeout(() => formInput.focus(), 50);
+  setTimeout(() => (s.useSelect ? citySelect : formInput).focus(), 60);
 }
 
-function advance(skip = false) {
-  const val = skip ? '' : formInput.value.trim();
-  const s = STEPS[currentStep];
-  if (!val && !s.skippable && !skip) return;
+formInput.addEventListener('keydown', e => { if (e.key==='Enter') advance(); });
 
+function advance(skip=false) {
+  const s = STEPS[currentStep];
+  let val = '';
+  if (s.useSelect) {
+    val = citySelect.value;
+    if (!val) { citySelect.style.borderBottomColor='var(--accent)'; setTimeout(()=>citySelect.style.borderBottomColor='',600); return; }
+    const city = CITIES.find(c => c.name===val);
+    formData.lat = city ? city.lat : '';
+    formData.lng = city ? city.lng : '';
+  } else {
+    val = skip ? '' : formInput.value.trim();
+    if (!val && !s.skippable) { formInput.style.borderBottomColor='var(--accent)'; setTimeout(()=>formInput.style.borderBottomColor='',600); return; }
+  }
   formData[s.id] = val;
 
-  // Animate out
-  formState.style.opacity = '0';
-  formState.style.transform = 'translateY(-10px)';
-  formState.style.transition = 'opacity 0.3s, transform 0.3s';
-
+  inputState.style.cssText += ';opacity:0;transform:translateY(-12px);transition:opacity 0.3s,transform 0.3s';
   setTimeout(() => {
-    formState.style.opacity = '1';
-    formState.style.transform = 'translateY(0)';
-    if (currentStep < STEPS.length - 1) {
-      currentStep++;
-      renderStep();
-    } else {
-      showScanning();
-    }
+    inputState.style.cssText += ';opacity:1;transform:translateY(0)';
+    if (currentStep < STEPS.length-1) { currentStep++; renderStep(); }
+    else submitToAPI();
   }, 300);
 }
 
-function showScanning() {
-  formState.style.display = 'none';
-  scanState.classList.add('active');
-  document.getElementById('sv-name').textContent  = formData.name  || '—';
-  document.getElementById('sv-birth').textContent = formData.birth || '—';
-  document.getElementById('sv-time').textContent  = formData.time  || '미입력';
-  document.getElementById('sv-city').textContent  = formData.city  || '—';
-
-  // API 연동 준비: handleFormSubmit 호출
-  handleFormSubmit(formData);
-
-  setTimeout(() => {
-    scanState.classList.remove('active');
-    doneState.classList.add('active');
-    document.getElementById('doneName').textContent = formData.name || '분석 대상';
-  }, 2800);
-}
-
-// ── API BRIDGE — Gemini + Make.com 연동 준비 완료 ─────────────────────────────
-async function handleFormSubmit(data) {
-  const payload = {
-    name:      data.name,
-    birthDate: data.birth,
-    birthTime: data.time || null,
-    birthCity: data.city,
-    timestamp: new Date().toISOString(),
-    source:    'BZR_landing_v1',
+// ═══════════════════════════════════════════════════════════════════
+// 8. BUILD PAYLOAD
+// ═══════════════════════════════════════════════════════════════════
+function buildPayload() {
+  const parts = (formData.birth||'').split('-');       // ["YYYY","MM","DD"]
+  const tParts= (formData.time ||'00:00').split(':');  // ["HH","mm"]
+  return {
+    year:      parts[0]  || '',
+    month:     parts[1]  || '',
+    date:      parts[2]  || '',
+    hours:     tParts[0] || '00',
+    minutes:   tParts[1] || '00',
+    latitude:  formData.lat,
+    longitude: formData.lng,
   };
-  console.log('[BZR] Payload ready for API:', payload);
-
-  // TODO: 아래 주석 해제 후 URL 교체
-  // const MAKE_WEBHOOK = 'https://hook.eu1.make.com/YOUR_WEBHOOK_ID';
-  // await fetch(MAKE_WEBHOOK, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(payload),
-  // });
-
-  return payload;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// 9. LOADING ANIMATION
+// ═══════════════════════════════════════════════════════════════════
+function startLoader() {
+  loadingBar.style.width = '0%';
+  loadingMsg.textContent = LOADING_MSGS[0];
+  loadingLog.innerHTML   = LOG_LINES.map(l=>`<p class="log-line">${l}</p>`).join('');
+  loaderTimers = [];
+
+  // Message rotation
+  let mi = 0;
+  const mt = setInterval(()=>{
+    mi=(mi+1)%LOADING_MSGS.length;
+    loadingMsg.style.opacity='0';
+    setTimeout(()=>{ loadingMsg.textContent=LOADING_MSGS[mi]; loadingMsg.style.opacity='1'; loadingMsg.style.transition='opacity 0.4s'; },300);
+  },2400);
+  loaderTimers.push(mt);
+
+  // Progress bar — creep to 88, wait for real response
+  let prog=0;
+  const bt = setInterval(()=>{
+    if(prog<88){ prog += (88-prog)*0.07 + 0.5; loadingBar.style.width=prog+'%'; }
+  },300);
+  loaderTimers.push(bt);
+
+  // Log lines reveal
+  const logEls = loadingLog.querySelectorAll('.log-line');
+  logEls.forEach((el,i)=>{
+    const t = setTimeout(()=>el.classList.add('show'), 500+i*800);
+    loaderTimers.push(t);
+  });
+}
+
+function stopLoader() {
+  loaderTimers.forEach(t => clearInterval(t) || clearTimeout(t));
+  loaderTimers=[];
+  loadingBar.style.transition='width 0.4s ease';
+  loadingBar.style.width='100%';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. STATE HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function hideAll() {
+  [loadingState, reportState, errorState].forEach(el=>{
+    el.classList.remove('active'); el.style.display='';
+  });
+  inputState.style.display='block';
+}
+function showOnly(el) {
+  inputState.style.display='none';
+  [loadingState, reportState, errorState].forEach(e=>{ e.classList.remove('active'); e.style.display=''; });
+  el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. SUBMIT
+// ═══════════════════════════════════════════════════════════════════
+async function submitToAPI() {
+  const payload = buildPayload();
+  console.log('[BZR] → Make.com payload:', payload);
+
+  showOnly(loadingState);
+  startLoader();
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+
+  try {
+    const res = await fetch(MAKE_WEBHOOK, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Parse response — Make.com may return JSON or plain text
+    const ct   = res.headers.get('content-type')||'';
+    let data = {};
+    if (ct.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const raw = await res.text();
+      try { data = JSON.parse(raw); } catch { data = { report: raw }; }
+    }
+
+    stopLoader();
+    renderReport(data);
+
+  } catch(err) {
+    console.error('[BZR] Webhook error:', err);
+    stopLoader();
+    showOnly(errorState);
+  }
+}
+
+function retrySubmit() { submitToAPI(); }
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. REPORT RENDERER
+// ═══════════════════════════════════════════════════════════════════
+function renderReport(data) {
+  showOnly(reportState);
+  $('reportName').textContent = formData.name || '분석 대상';
+  $('reportMeta').textContent = `ANALYSIS COMPLETE / ${new Date().toLocaleDateString('ko-KR')} / BZR ENGINE v1.0`;
+
+  const container = $('reportSections');
+  container.innerHTML = '';
+
+  // --- Extract report content ---
+  // Make.com webhook의 응답에서 `report` 필드를 우선 사용
+  const raw = data.report ?? data.result ?? data.output ?? data.content ?? data.text ?? null;
+
+  if (raw === null) {
+    // Fallback: render each top-level key as a section
+    Object.entries(data).forEach(([k,v],i) => {
+      if (typeof v === 'object') v = JSON.stringify(v, null, 2);
+      container.appendChild(makeSection(k, String(v), i));
+    });
+    return;
+  }
+
+  // String report — split into sections by double newline or "==="-style headers
+  const reportStr = String(raw).trim();
+  const blocks    = reportStr.split(/\n{2,}/);
+
+  if (blocks.length <= 1) {
+    container.appendChild(makeSection('분석 리포트', reportStr, 0));
+    return;
+  }
+
+  let secIdx = 0;
+  blocks.forEach(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return;
+    const lines = trimmed.split('\n');
+    // Heuristic: first line is title if short and rest is body
+    let title = `섹션 ${secIdx+1}`;
+    let body  = trimmed;
+    if (lines.length > 1 && lines[0].length < 60) {
+      title = lines.shift();
+      body  = lines.join('\n').trim();
+    }
+    container.appendChild(makeSection(title, body, secIdx++));
+  });
+}
+
+function makeSection(label, body, idx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'report-section';
+  wrap.style.animationDelay = (idx * 0.13) + 's';
+  const labelEl = document.createElement('p');
+  labelEl.className = 'report-section-label';
+  labelEl.textContent = label;
+  const bodyEl = document.createElement('p');
+  bodyEl.className = 'report-section-text';
+  bodyEl.textContent = body;   // textContent = XSS-safe
+  const div = document.createElement('div');
+  div.className = 'report-divider';
+  wrap.appendChild(labelEl);
+  wrap.appendChild(bodyEl);
+  wrap.appendChild(div);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. RESET
+// ═══════════════════════════════════════════════════════════════════
+function resetForm() {
+  currentStep = 0;
+  Object.keys(formData).forEach(k => formData[k]='');
+  hideAll();
+  renderStep();
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
 renderStep();
 </script>
 </body>
