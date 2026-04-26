@@ -1705,34 +1705,33 @@ function renderReport(data) {
 
   const reportStr = String(raw).trim();
 
-  // ── 섹션 구분: 반드시 \n\n 이상일 때만 카드 분리 ──────────────────
-  // \n 1회는 본문 내 줄바꿈으로 보존 (white-space: pre-wrap 이 렌더링)
+  // ── 섹션 구분 규칙 ────────────────────────────────────────────────
+  // • \n\n 이상(연속 2회 줄바꿈)  → 새 카드(섹션) 경계
+  // • \n 1회                      → 카드 내부 줄바꿈으로 보존
+  //                                 (CSS white-space: pre-wrap 이 그대로 렌더링)
   const blocks = reportStr.split(/\n{2,}/);
 
   if (blocks.length <= 1) {
-    // 구분자가 없으면 전체를 카드 하나로
-    container.appendChild(makeSection('분석 리포트', reportStr, 0));
+    // \n\n 구분자가 없으면 전체를 카드 하나로 출력
+    const lines = reportStr.split('\n');
+    const title = lines[0].trim();
+    const body  = lines.slice(1).join('\n').trim();
+    container.appendChild(makeSection(title || '분석 리포트', body || reportStr, 0));
     return;
   }
 
   let secIdx = 0;
   blocks.forEach(block => {
     const trimmed = block.trim();
-    if (!trimmed) return;                       // 빈 블록 무시
+    if (!trimmed) return;  // 빈 블록 무시
 
-    const lines = trimmed.split('\n');          // 블록 내 개별 줄
-
-    let title, body;
-
-    if (lines.length >= 2 && lines[0].length < 60) {
-      // 첫 줄이 짧으면 → 제목, 나머지 전체를 join('\n')으로 본문 보존
-      title = lines[0].trim();
-      body  = lines.slice(1).join('\n').trim(); // ← slice(1).join('\n') 핵심
-    } else {
-      // 첫 줄이 길거나 줄이 1개 → 전체가 본문
-      title = `섹션 ${secIdx + 1}`;
-      body  = trimmed;
-    }
+    // 블록을 \n 단위로 쪼갠 뒤
+    // lines[0]         → 항상 제목(title)
+    // lines.slice(1)   → 나머지 전체를 '\n'으로 재결합 → 본문(body)
+    // ★ 길이 조건(< 60) 같은 휴리스틱 없음 → 오탐 없음
+    const lines = trimmed.split('\n');
+    const title = lines[0].trim();
+    const body  = lines.slice(1).join('\n').trim();
 
     container.appendChild(makeSection(title, body, secIdx++));
   });
