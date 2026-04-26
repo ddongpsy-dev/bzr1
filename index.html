@@ -1703,16 +1703,29 @@ function renderReport(data) {
     return;
   }
 
-  const reportStr = String(raw).trim();
+  // ── 1단계: 마크다운 정리 ───────────────────────────────────────────
+  // 백엔드가 마크다운으로 응답하는 경우를 처리
+  // **굵게**, *기울임*, ### 헤더, - / • 불릿 기호 제거
+  function stripMarkdown(str) {
+    return str
+      .replace(/#{1,6}\s*/g, '')          // ### 헤더 마크 제거
+      .replace(/\*\*(.+?)\*\*/g, '$1')    // **굵게** → 텍스트만
+      .replace(/\*(.+?)\*/g, '$1')         // *기울임* → 텍스트만
+      .replace(/^[\-\*•]\s+/gm, '')       // 줄 맨 앞 불릿(- * •) 제거
+      .replace(/^\d+\.\s+/gm, '')         // 줄 맨 앞 순번(1. 2.) 제거
+      .trim();
+  }
 
-  // ── 섹션 구분 규칙 ────────────────────────────────────────────────
-  // • \n\n 이상(연속 2회 줄바꿈)  → 새 카드(섹션) 경계
-  // • \n 1회                      → 카드 내부 줄바꿈으로 보존
-  //                                 (CSS white-space: pre-wrap 이 그대로 렌더링)
+  const reportStr = stripMarkdown(String(raw).trim());
+
+  // ── 2단계: 섹션 분리 ───────────────────────────────────────────────
+  // 
+
+ 이상 → 새 카드 | 
+ 1회 → 카드 내 줄바꿈 보존
   const blocks = reportStr.split(/\n{2,}/);
 
   if (blocks.length <= 1) {
-    // \n\n 구분자가 없으면 전체를 카드 하나로 출력
     const lines = reportStr.split('\n');
     const title = lines[0].trim();
     const body  = lines.slice(1).join('\n').trim();
@@ -1720,20 +1733,24 @@ function renderReport(data) {
     return;
   }
 
+  // ── 3단계: 각 블록 → 제목 + 본문 ────────────────────────────────
+  // lines[0]       → 제목 (항상)
+  // lines.slice(1) → 본문 전체를 \n으로 재결합 (1회 줄바꿈 그대로 유지)
   let secIdx = 0;
   blocks.forEach(block => {
     const trimmed = block.trim();
-    if (!trimmed) return;  // 빈 블록 무시
+    if (!trimmed) return;
 
-    // 블록을 \n 단위로 쪼갠 뒤
-    // lines[0]         → 항상 제목(title)
-    // lines.slice(1)   → 나머지 전체를 '\n'으로 재결합 → 본문(body)
-    // ★ 길이 조건(< 60) 같은 휴리스틱 없음 → 오탐 없음
     const lines = trimmed.split('\n');
     const title = lines[0].trim();
     const body  = lines.slice(1).join('\n').trim();
 
-    container.appendChild(makeSection(title, body, secIdx++));
+    // body가 비어있으면 title 전체를 본문으로, 제목은 자동 부여
+    if (!body) {
+      container.appendChild(makeSection(`섹션 ${secIdx + 1}`, title, secIdx++));
+    } else {
+      container.appendChild(makeSection(title, body, secIdx++));
+    }
   });
 }
 
