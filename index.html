@@ -1703,74 +1703,83 @@ function renderReport(data) {
     return;
   }
 
-  // ── 마크다운 기호 제거 함수 (제목/본문 모두 적용) ─────────────────
+  // ── 마크다운 기호 제거 ─────────────────────────────────────────────
   function clean(str) {
     return str
-      .replace(/^#{1,6}\s*/gm, '')          // ## 헤더 마크 제거
-      .replace(/\*\*(.+?)\*\*/gs, '$1')     // **굵게** → 텍스트만
-      .replace(/\*(.+?)\*/gs, '$1')         // *기울임* → 텍스트만
-      .replace(/\[(.+?)\]\(.+?\)/g, '$1')   // [링크](url) → 텍스트만
-      .replace(/\[(.+?)\]/g, '$1')          // [대괄호] → 텍스트만
-      .replace(/^[\-\*\u2022]\s+/gm, '')    // 줄 앞 불릿 - * • 제거
-      .replace(/^\d+\.\s+/gm, '')           // 줄 앞 순번 1. 2. 제거
+      .replace(/^\s*#{1,6}\s*/gm, '')         // ## 헤더 (앞 공백 포함)
+      .replace(/\*\*(.+?)\*\*/gs, '$1')        // **굵게**
+      .replace(/\*(.+?)\*/gs, '$1')            // *기울임*
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1')      // [링크](url)
+      .replace(/\[(.+?)\]/g, '$1')             // [대괄호]
+      .replace(/^[\-\*\u2022]\s+/gm, '')       // 불릿 - * •
+      .replace(/^\d+\.\s+/gm, '')              // 순번 1. 2.
       .trim();
   }
 
-  // ── 섹션 분리 전략 ────────────────────────────────────────────────
-  // 원본 raw에서 ## 헤더 유무를 먼저 확인 (clean 전에)
-  const hasHeaders = /^#{1,6}\s+\S/m.test(String(raw).trim());
+  // ── 전처리: \r\n → \n 정규화, 탭 → 공백 ──────────────────────────
+  const rawStr = String(raw)
+    .replace(/\r\n/g, '\n')   // Windows 줄바꿈 통일
+    .replace(/\r/g, '\n')     // 구형 Mac 줄바꿈 통일
+    .replace(/\t/g, ' ')      // 탭 → 공백
+    .trim();
+
+  // ── 헤더 감지: 줄 시작에 공백이 있어도 ## 로 인식 ─────────────────
+  const hasHeaders = /^\s*#{1,6}\s+\S/m.test(rawStr);
+
+  // 디버그용 (콘솔에서 확인 가능)
+  console.log('[BZR] hasHeaders:', hasHeaders);
+  console.log('[BZR] raw preview:', rawStr.slice(0, 200));
 
   if (hasHeaders) {
     // ## 헤더를 카드 경계로 사용
-    // 헤더 사이의 모든 내용(줄바꿈 포함)은 본문으로 보존
-    const rawStr = String(raw).trim();
-    const headerRe = /^#{1,6}\s+(.+)$/gm;
+    // 줄 앞 공백이 있어도 매칭, \n 뒤 바로 오는 ## 도 포함
+    const headerRe = /^\s*#{1,6}\s+(.+)$/gm;
     const sections = [];
     let lastTitle = null;
-    let lastIdx = 0;
+    let lastIdx   = 0;
     let match;
 
     while ((match = headerRe.exec(rawStr)) !== null) {
       if (lastTitle !== null) {
-        // 이전 헤더 ~ 현재 헤더 사이 = 이전 카드의 본문
         sections.push({
           title: clean(lastTitle),
-          body:  clean(rawStr.slice(lastIdx, match.index).trim())
+          body:  clean(rawStr.slice(lastIdx, match.index))
         });
       } else if (match.index > 0) {
-        // 첫 헤더 이전에 서문이 있으면 카드로 추가
-        const preamble = clean(rawStr.slice(0, match.index).trim());
+        const preamble = clean(rawStr.slice(0, match.index));
         if (preamble) sections.push({ title: '분석 개요', body: preamble });
       }
-      lastTitle = match[1];                     // 헤더 텍스트 (## 제외)
-      lastIdx   = match.index + match[0].length; // 헤더 줄 다음부터
+      lastTitle = match[1].trim();
+      lastIdx   = match.index + match[0].length;
     }
 
-    // 마지막 헤더 이후 본문 처리
+    // 마지막 헤더 이후 본문
     if (lastTitle !== null) {
       sections.push({
         title: clean(lastTitle),
-        body:  clean(rawStr.slice(lastIdx).trim())
+        body:  clean(rawStr.slice(lastIdx))
       });
     }
 
-    sections.forEach((sec, i) => {
-      container.appendChild(makeSection(sec.title, sec.body, i));
-    });
-
-  } else {
-    // ## 헤더가 없으면 전체를 카드 하나로 출력
-    // 줄바꿈은 모두 본문 내 줄바꿈으로 그대로 보존
-    const cleaned = clean(String(raw).trim());
-    const lines   = cleaned.split('\n');
-    const first   = lines[0].trim();
-    const rest    = lines.slice(1).join('\n').trim();
-
-    if (rest && first.length < 50) {
-      container.appendChild(makeSection(first, rest, 0));
-    } else {
-      container.appendChild(makeSection('분석 리포트', cleaned, 0));
+    if (sections.length > 0) {
+      sections.forEach((sec, i) => {
+        container.appendChild(makeSection(sec.title, sec.body, i));
+      });
+      return;
     }
+    // sections가 비어있으면 아래 fallback으로 넘어감
+  }
+
+  // ── Fallback: 헤더 없음 → 전체를 카드 하나로 ─────────────────────
+  const cleaned = clean(rawStr);
+  const lines   = cleaned.split('\n');
+  const first   = lines[0].trim();
+  const rest    = lines.slice(1).join('\n').trim();
+
+  if (rest && first.length < 60) {
+    container.appendChild(makeSection(first, rest, 0));
+  } else {
+    container.appendChild(makeSection('분석 리포트', cleaned, 0));
   }
 }
 
