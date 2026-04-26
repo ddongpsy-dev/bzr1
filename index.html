@@ -1703,24 +1703,29 @@ function renderReport(data) {
     return;
   }
 
-const reportStr = String(raw).trim();
-    const blocks = reportStr.split(/\n{2,}/);
+  const reportStr = String(raw).trim();
+  const blocks    = reportStr.split(/\n{2,}/);
+
+  if (blocks.length <= 1) {
+    container.appendChild(makeSection('분석 리포트', reportStr, 0));
+    return;
+  }
 
   let secIdx = 0;
   blocks.forEach(block => {
     const trimmed = block.trim();
     if (!trimmed) return;
-
-        const lines = trimmed.split('\n');
-    const title = lines[0]; 
-    const body  = lines.slice(1).join('\n').trim(); 
-
-    if (!body) {
-          container.appendChild(makeSection('분석 리포트', title, secIdx++));
-    } else {
-      container.appendChild(makeSection(title, body, secIdx++));
+    const lines = trimmed.split('\n');
+    let title = `섹션 ${secIdx+1}`;
+    let body  = trimmed;
+    if (lines.length > 1 && lines[0].length < 60) {
+      title = lines.shift();
+      body  = lines.join('\n').trim();
     }
+    container.appendChild(makeSection(title, body, secIdx++));
   });
+}
+
 function makeSection(label, body, idx) {
   const wrap = document.createElement('div');
   wrap.className = 'report-section';
