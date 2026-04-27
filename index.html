@@ -319,10 +319,17 @@ async function sendDataToWebhook(user) {
                                localStorage.setItem('bzr_credit', String(data.current_credit));
 }
 
-// ── 1. 세션 체크: 이미 로그인돼 있으면 바로 분석 페이지로 ────────────
-// (재로그인 없이 탭을 열었을 때만 — 웹훅은 여기서 보내지 않음)
+// ── 로그인 버튼 클릭 여부 플래그
+// onAuthStateChanged 가 signInWithPopup 직후 먼저 발화해서
+// 웹훅 실행 전에 페이지를 가져가는 것을 막기 위한 장치
+let loginInProgress = false;
+
+// ── 1. 세션 체크: 이미 로그인된 세션으로 탭을 열었을 때만 이동 ─────────
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    // loginInProgress = true 이면 버튼 클릭 흐름이 제어 중이므로 무시
+    if (loginInProgress) return;
+    // 기존 세션(탭 열기·새로고침) → 웹훅 없이 바로 이동
     window.location.replace('./analysis.html');
     return;
   }
@@ -345,31 +352,35 @@ btnLogin.addEventListener('click', async () => {
   btnLogin.disabled  = true;
   btnTxt.textContent = '처리 중...';
 
+  // 플래그 ON: onAuthStateChanged 가 이 흐름에 끼어들지 못하도록 차단
+  loginInProgress = true;
+
   try {
-    // ★ 원칙1: signInWithPopup await 직후 웹훅 즉시 호출
     const result = await signInWithPopup(auth, provider);
     const user   = result.user;
 
     btnTxt.textContent = '데이터 전송 중...';
 
-    // ★ 원칙2: 웹훅 200 OK 응답을 기다린 후 리다이렉트
+    // 웹훅 전송 (200 OK 대기)
     await sendDataToWebhook(user);
 
-    // 전송 성공 → 이동
+    // 전송 완료 후 이동 (플래그는 페이지가 바뀌므로 자동 소멸)
     window.location.replace('./analysis.html');
 
   } catch (err) {
-    console.error('[BZR] Login/webhook error:', err);
+    // 실패 시 플래그 해제 후 버튼 복구
+    loginInProgress    = false;
     btnLogin.disabled  = false;
     btnTxt.textContent = 'Google로 시작하기';
+    console.error('[BZR] Login/webhook error:', err);
 
     if (err.code === 'auth/popup-closed-by-user') {
       showError('로그인 창이 닫혔습니다. 다시 시도해주세요.');
     } else if (err.code === 'auth/popup-blocked') {
       showError('팝업이 차단됐습니다. 브라우저 팝업 허용 후 재시도해주세요.');
     } else if (err.message && err.message.startsWith('Webhook')) {
-      // 웹훅 실패 시: 데이터 전송 오류지만 로그인은 됐으므로 일단 이동
-      console.warn('[BZR] Webhook failed, proceeding to analysis.html anyway');
+      // 웹훅은 실패했지만 로그인은 완료 → 그냥 이동
+      console.warn('[BZR] Webhook failed, proceeding anyway');
       window.location.replace('./analysis.html');
     } else {
       showError('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
