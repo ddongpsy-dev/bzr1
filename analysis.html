@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BZR — DATA STRATEGY INTELLIGENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   RESET & TOKENS
+═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #000000;
+  --bg-1:      #080808;
+  --bg-2:      #0d0d0d;
+  --bg-3:      #111111;
+  --bg-4:      #161616;
+  --border:    #1a1a1a;
+  --border-2:  #2e2e2e;
+  --border-3:  #3a3a3a;
+  --mute-3:    #555555;
+  --mute-2:    #888888;
+  --mute-1:    #aaaaaa;
+  --text-2:    #bbbbbb;
+  --text-1:    #e0e0e0;
+  --white:     #ffffff;
+  --cyan:      #00f0ff;
+  --cyan-dim:  rgba(0,240,255,0.08);
+  --cyan-glow: rgba(0,240,255,0.25);
+  --red:       #ff3333;
+  --red-dim:   rgba(255,51,51,0.08);
+  --sans:      'Inter', -apple-system, sans-serif;
+  --mono:      'JetBrains Mono', 'Courier New', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--sans);
+  overflow-x: hidden;
+  cursor: crosshair;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── GRID OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,240,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,240,255,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── SCAN LINE ── */
+body::after {
+  content: '';
+  position: fixed; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none; z-index: 9998; opacity: 0.15;
+}
+@keyframes scanline { 0%{top:-1px;opacity:0} 10%{opacity:0.15} 90%{opacity:0.15} 100%{top:100vh;opacity:0} }
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════════════════════ */
+@keyframes fadeUp    { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+@keyframes ticker    { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes blink     { 0%,100%{opacity:1} 49%{opacity:1} 50%{opacity:0} 99%{opacity:0} }
+@keyframes slideUp   { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes cyanPulse { 0%,100%{box-shadow:0 0 0 rgba(0,240,255,0)} 50%{box-shadow:0 0 20px rgba(0,240,255,0.15)} }
+@keyframes spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+@keyframes glitch1 {
+  0%,91%,100%{transform:translateX(0)clip-path:none}
+  92%{transform:translateX(-4px);clip-path:inset(0 0 60% 0)}
+  94%{transform:translateX(4px);clip-path:inset(40% 0 0 0)}
+  96%{transform:translateX(-2px);clip-path:inset(20% 0 30% 0)}
+  98%{transform:translateX(0);clip-path:none}
+}
+@keyframes glitch2 {
+  0%,93%,100%{opacity:0}
+  94%{opacity:0.6;transform:translateX(6px) scaleY(0.8)}
+  97%{opacity:0}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: 52px;
+  padding: 0 clamp(20px,5vw,80px);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(0,0,0,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.nav-logo-mark {
+  width: 24px; height: 24px;
+  border: 1px solid var(--cyan);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 4px;
+}
+.nav-logo-mark span {
+  background: var(--cyan); display: block;
+  transition: opacity 0.3s;
+}
+.nav-logo-mark span:nth-child(2),
+.nav-logo-mark span:nth-child(3) { opacity: 0.3; }
+.nav-logo-text {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.15em; color: var(--white);
+}
+.nav-logo-text em { color: var(--cyan); font-style: normal; }
+
+.nav-center {
+  display: flex; align-items: center; gap: 4px;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.nav-tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.12em; color: var(--mute-2);
+  padding: 4px 10px; border: 1px solid var(--border);
+}
+.nav-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--cyan); letter-spacing: 0.1em;
+  padding: 4px 10px; border: 1px solid rgba(0,240,255,0.2);
+  background: var(--cyan-dim);
+}
+.nav-status::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--cyan); animation: blink 2s infinite;
+}
+
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links a {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: #aaaaaa; text-decoration: none; text-transform: uppercase;
+  padding: 6px 12px; border: 1px solid transparent;
+  transition: all 0.2s; cursor: crosshair;
+}
+.nav-links a:hover { color: var(--cyan); border-color: var(--border-2); background: var(--bg-2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  padding: 52px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative; overflow: hidden;
+}
+
+.hero-left {
+  padding: clamp(60px,10vw,120px) clamp(20px,5vw,80px);
+  display: flex; flex-direction: column; justify-content: center;
+  border-right: 1px solid var(--border);
+  position: relative; z-index: 1;
+}
+
+.hero-eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 40px;
+  opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards;
+}
+.hero-eyebrow-line {
+  width: 24px; height: 1px; background: var(--cyan);
+}
+.hero-eyebrow-text {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase;
+}
+
+.hero-h1 {
+  font-size: clamp(36px,5.5vw,72px);
+  font-weight: 700; line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--white);
+  margin-bottom: 12px;
+  opacity: 0; animation: fadeUp 0.8s ease 0.35s forwards;
+}
+.hero-h1 .accent { color: var(--cyan); position: relative; }
+.hero-h1 .accent::after {
+  content: attr(data-text);
+  position: absolute; left: 2px; top: 0;
+  color: var(--cyan); opacity: 0;
+  animation: glitch2 7s infinite;
+}
+
+.hero-h2 {
+  font-size: clamp(36px,5.5vw,72px);
+  font-weight: 300; line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #888888;
+  margin-bottom: 32px;
+  opacity: 0; animation: fadeUp 0.8s ease 0.45s forwards;
+}
+
+.hero-desc {
+  font-size: 15px; font-weight: 400; line-height: 1.9;
+  color: var(--text-1); max-width: 420px;
+  margin-bottom: 48px;
+  opacity: 0; animation: fadeUp 0.8s ease 0.55s forwards;
+}
+
+.hero-actions {
+  display: flex; align-items: center; gap: 16px;
+  opacity: 0; animation: fadeUp 0.8s ease 0.65s forwards;
+}
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--cyan); color: #000;
+  padding: 12px 28px;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; text-decoration: none;
+  cursor: crosshair; transition: all 0.2s;
+  border: 1px solid var(--cyan);
+}
+.btn-primary:hover { background: transparent; color: var(--cyan); }
+.btn-primary svg { transition: transform 0.2s; }
+.btn-primary:hover svg { transform: translateX(4px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--mute-1);
+  padding: 12px 24px;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 400; letter-spacing: 0.1em;
+  text-transform: uppercase; text-decoration: none;
+  cursor: crosshair; transition: all 0.2s;
+  border: 1px solid var(--border-3);
+}
+.btn-ghost:hover { color: var(--white); border-color: var(--mute-2); }
+
+/* Hero Right — data visualization panel */
+.hero-right {
+  padding: clamp(60px,8vw,100px) clamp(20px,4vw,60px);
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; overflow: hidden;
+  background: var(--bg-1);
+}
+
+.hero-panel-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--mute-3);
+  text-transform: uppercase; margin-bottom: 24px;
+  opacity: 0; animation: fadeIn 1s ease 1s forwards;
+}
+
+.hero-chart {
+  height: 180px;
+  display: flex; align-items: flex-end; gap: 3px;
+  margin-bottom: 32px;
+  opacity: 0; animation: fadeIn 1s ease 1.1s forwards;
+}
+.chart-bar {
+  flex: 1; background: var(--bg-3);
+  border-top: 1px solid var(--border-2);
+  position: relative; transition: background 0.3s;
+  cursor: crosshair;
+}
+.chart-bar:hover { background: var(--bg-4); }
+.chart-bar::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,240,255,0.4), rgba(0,240,255,0.05));
+  transition: height 1.4s cubic-bezier(0.16,1,0.3,1);
+  height: 0%;
+}
+.chart-bar.animate::after { height: var(--h); }
+.chart-bar.highlight { border-top-color: var(--cyan); }
+.chart-bar.highlight::after { background: linear-gradient(to top, rgba(0,240,255,0.8), rgba(0,240,255,0.1)); }
+
+.hero-metrics {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border);
+  opacity: 0; animation: fadeIn 1s ease 1.2s forwards;
+}
+.hero-metric {
+  background: var(--bg-1); padding: 16px;
+}
+.hero-metric-val {
+  font-family: var(--mono); font-size: 20px; font-weight: 500;
+  color: var(--white); letter-spacing: -0.02em; margin-bottom: 4px;
+}
+.hero-metric-val .unit { font-size: 11px; color: var(--mute-1); }
+.hero-metric-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.15em; color: var(--mute-2); text-transform: uppercase;
+}
+.hero-metric-delta {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--cyan); margin-top: 4px;
+}
+
+/* Corner decorations */
+.corner {
+  position: absolute; width: 16px; height: 16px;
+  border-color: var(--border-3); border-style: solid;
+}
+.corner-tl { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+.corner-tr { top: 12px; right: 12px; border-width: 1px 1px 0 0; }
+.corner-bl { bottom: 12px; left: 12px; border-width: 0 0 1px 1px; }
+.corner-br { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+.hero-coords {
+  position: absolute; bottom: 24px; right: clamp(20px,5vw,80px);
+  display: flex; gap: 16px;
+  opacity: 0; animation: fadeIn 1s ease 1.4s forwards;
+}
+.hero-coord {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.12em; color: var(--mute-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TICKER
+═══════════════════════════════════════════════════════════════ */
+.ticker-wrap {
+  overflow: hidden; height: 36px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+  display: flex; align-items: center;
+  position: relative; z-index: 1;
+}
+.ticker-track {
+  display: flex; gap: 0; white-space: nowrap;
+  width: max-content; animation: ticker 30s linear infinite;
+}
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 0;
+  padding: 0 32px; height: 36px;
+  border-right: 1px solid var(--border);
+}
+.ticker-key {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.15em; color: var(--mute-3); margin-right: 8px;
+}
+.ticker-val {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.1em; color: var(--mute-1);
+}
+.ticker-val.pos { color: var(--cyan); }
+
+/* ═══════════════════════════════════════════════════════════════
+   INPUT FLOW — SINGLE PAGE FORM
+═══════════════════════════════════════════════════════════════ */
+#input-flow {
+  display: flex; align-items: stretch;
+  border-top: 1px solid var(--border);
+  position: relative; z-index: 1;
+}
+
+/* Form Main */
+.form-main {
+  flex: 1;
+  padding: clamp(56px,7vw,96px) clamp(24px,8vw,120px);
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+.form-inner { width: 100%; max-width: 800px; }
+
+/* Section header */
+.form-section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
+}
+.form-section-eyebrow {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.22em; color: var(--mute-2);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-section-eyebrow::before {
+  content: ''; width: 4px; height: 4px;
+  background: var(--cyan); border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+.form-section-title {
+  font-size: clamp(22px,3vw,36px); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--white);
+  margin-bottom: 4px; line-height: 1.15;
+}
+.form-section-desc {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--mute-1); margin-bottom: 48px;
+}
+
+/* 2×2 input grid */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.input-group {
+  background: var(--bg-1);
+  padding: 24px 28px 28px;
+  display: flex; flex-direction: column;
+  transition: background 0.2s;
+  position: relative;
+}
+.input-group:focus-within {
+  background: var(--bg-2);
+}
+.input-group::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--cyan);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.input-group:focus-within::before { transform: scaleX(1); }
+
+.input-group-num {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--border-3);
+  margin-bottom: 12px;
+}
+
+.form-label {
+  display: block;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 600; letter-spacing: 0.14em;
+  color: var(--text-1); margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.form-input {
+  width: 100%; background: transparent;
+  border: none; border-bottom: 1px solid var(--border-3);
+  color: var(--white);
+  font-family: var(--sans); font-size: clamp(18px,2.2vw,28px);
+  font-weight: 300; padding: 8px 0;
+  outline: none; letter-spacing: -0.01em;
+  transition: border-color 0.2s; caret-color: var(--cyan);
+}
+.form-input:focus { border-bottom-color: var(--cyan); }
+.form-input::placeholder { color: var(--border-2); }
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.3) sepia(1) saturate(2) hue-rotate(160deg);
+  cursor: crosshair; opacity: 0.5;
+}
+
+.city-select {
+  width: 100%; background: transparent;
+  border: none; border-bottom: 1px solid var(--border-3);
+  color: var(--white);
+  font-family: var(--sans); font-size: clamp(15px,1.8vw,22px);
+  font-weight: 300; padding: 8px 0;
+  outline: none; transition: border-color 0.2s;
+  cursor: crosshair; appearance: none; -webkit-appearance: none;
+}
+.city-select:focus { border-bottom-color: var(--cyan); }
+.city-select option { background: #111; color: var(--text-1); font-family: var(--mono); font-size: 13px; }
+
+.input-group-hint {
+  margin-top: 8px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--mute-1); letter-spacing: 0.06em;
+}
+
+/* Validation error flash */
+.input-group.error { background: rgba(255,51,51,0.04); }
+.input-group.error .form-input,
+.input-group.error .city-select { border-bottom-color: var(--red); }
+
+/* Submit row */
+.form-submit-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 24px;
+  flex-wrap: wrap;
+}
+.form-submit-note {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--mute-3); letter-spacing: 0.08em;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-submit-note::before {
+  content: ''; width: 4px; height: 4px;
+  border-radius: 50%; background: var(--mute-3); flex-shrink: 0;
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid var(--border-3);
+  color: var(--mute-1); padding: 11px 28px;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: crosshair; transition: all 0.2s; text-decoration: none;
+}
+.btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+
+.btn-run {
+  background: var(--cyan); color: #000;
+  border-color: var(--cyan); font-weight: 600;
+  padding: 14px 40px; font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.btn-run:hover { background: transparent; color: var(--cyan); }
+.btn-run svg { transition: transform 0.2s; }
+.btn-run:hover svg { transform: translateX(4px); }
+
+/* ── Hidden helpers kept for JS compatibility ── */
+.step-bars, .form-tag, .form-hint,
+#nextBtn, #skipBtn, #formTag, #formLabel,
+#formInput, #citySelect { /* managed by JS — some hidden via inline style */ }
+
+/* ═══════════════════════════════════════════════════════════════
+   LOADING STATE — GLITCH TERMINAL
+═══════════════════════════════════════════════════════════════ */
+#loadingState { display: none; }
+#loadingState.active { display: flex; flex-direction: column; }
+
+.loading-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 40px;
+}
+.loading-spinner {
+  width: 20px; height: 20px;
+  border: 1px solid var(--border-3);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.loading-tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.2em; color: var(--cyan);
+  text-transform: uppercase;
+}
+
+.loading-title {
+  font-size: clamp(20px,3vw,36px); font-weight: 300;
+  color: var(--white); line-height: 1.3;
+  margin-bottom: 40px; min-height: 48px;
+  position: relative;
+}
+.loading-title .glitch-layer {
+  position: absolute; top: 0; left: 0; right: 0;
+  color: var(--cyan); opacity: 0;
+  animation: glitch2 6s infinite 0.3s;
+  pointer-events: none;
+}
+
+.loading-bar-wrap {
+  width: 100%; height: 2px;
+  background: var(--border-2); margin-bottom: 40px;
+  position: relative; overflow: hidden;
+}
+.loading-bar {
+  height: 100%; background: var(--cyan);
+  width: 0%; transition: width 0.5s ease;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+.loading-bar-wrap::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0; width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(0,240,255,0.6));
+  animation: shimmer 1.5s ease infinite;
+}
+@keyframes shimmer { 0%{opacity:0} 50%{opacity:1} 100%{opacity:0} }
+
+.loading-log {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); background: var(--bg-1);
+  overflow: hidden;
+}
+.log-line {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 16px; border-bottom: 1px solid var(--border);
+  opacity: 0; transition: opacity 0.4s; font-family: var(--mono); font-size: 11px;
+}
+.log-line:last-child { border-bottom: none; }
+.log-line.show { opacity: 1; }
+.log-time { color: var(--mute-2); flex-shrink: 0; font-size: 10px; }
+.log-status { color: var(--cyan); flex-shrink: 0; font-size: 10px; }
+.log-text { color: var(--mute-1); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REPORT STATE — DATA CARDS
+═══════════════════════════════════════════════════════════════ */
+#reportState { display: none; }
+#reportState.active { display: block; animation: slideUp 0.6s ease; }
+
+.report-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 24px; margin-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.report-meta {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.18em; color: var(--mute-2);
+  text-transform: uppercase;
+}
+.report-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid rgba(0,240,255,0.3);
+  background: var(--cyan-dim);
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.12em; color: var(--cyan);
+}
+.report-badge::before {
+  content: ''; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--cyan);
+}
+
+.report-title-row { margin-bottom: 40px; }
+.report-name {
+  font-size: clamp(26px,4vw,48px); font-weight: 700;
+  letter-spacing: -0.03em; color: var(--white);
+  margin-bottom: 8px; line-height: 1.1;
+}
+.report-subtitle {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--mute-2); letter-spacing: 0.08em;
+}
+
+/* Report sections rendered as data cards */
+#reportSections {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.report-section {
+  background: var(--bg-1);
+  animation: slideUp 0.5s ease backwards;
+  position: relative; overflow: hidden;
+}
+.report-section:hover { background: var(--bg-2); }
+
+/* Decorative SVG line art in card header */
+.report-card-art {
+  height: 80px; padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.report-card-art svg {
+  width: 100%; height: 100%;
+  opacity: 0.5;
+}
+
+.report-section-label {
+  font-family: var(--sans); font-size: 20px;
+  font-weight: 700; letter-spacing: -0.02em;
+  color: var(--white);
+  display: flex; align-items: center; gap: 10px;
+  padding: 28px 28px 16px;
+  line-height: 1.2;
+}
+.report-section-label::before {
+  content: ''; width: 4px; height: 4px;
+  background: var(--cyan); border-radius: 50%;
+  flex-shrink: 0; margin-top: 1px;
+}
+.report-section-num {
+  margin-left: auto; color: var(--border-3);
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 400; letter-spacing: 0.1em;
+}
+
+/* 마지막 섹션 — 결론 강조 */
+.report-section:last-of-type {
+  background: rgba(0,240,255,0.04);
+  border-top: 2px solid var(--cyan);
+}
+.report-section:last-of-type .report-section-label {
+  font-size: 24px;
+  color: var(--cyan);
+}
+.report-section:last-of-type .report-section-label::before {
+  width: 6px; height: 6px;
+  box-shadow: 0 0 8px var(--cyan);
+}
+.report-section:last-of-type::before {
+  opacity: 0.6 !important;
+}
+
+.report-section-text {
+  font-size: 15px; font-weight: 400;
+  color: var(--text-1); line-height: 2.0;
+  padding: 4px 28px 32px;
+  white-space: pre-wrap; word-break: break-word;
+  text-align: justify;
+}
+
+/* Cyan accent line on left edge */
+.report-section::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px; background: var(--cyan);
+  opacity: 0; transition: opacity 0.3s;
+}
+.report-section:hover::before { opacity: 0.4; }
+
+.report-divider {
+  display: none; /* removed — grid handles spacing */
+}
+
+.report-restart {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 8px;
+  background: transparent; border: 1px solid var(--border-3);
+  color: var(--mute-2); padding: 10px 24px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: crosshair; transition: all 0.2s;
+}
+.report-restart:hover { color: var(--white); border-color: var(--mute-2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   ERROR STATE
+═══════════════════════════════════════════════════════════════ */
+#errorState { display: none; }
+#errorState.active { display: block; animation: slideUp 0.4s ease; }
+
+.error-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 32px;
+}
+.error-icon {
+  width: 36px; height: 36px; border: 1px solid var(--red);
+  background: var(--red-dim); display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; color: var(--red); flex-shrink: 0;
+}
+.error-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--red); text-transform: uppercase; }
+
+.error-code {
+  font-size: clamp(20px,3vw,36px); font-weight: 600;
+  letter-spacing: -0.02em; color: var(--red); margin-bottom: 20px;
+}
+.error-body {
+  border-left: 2px solid var(--red); padding-left: 20px; margin-bottom: 40px;
+}
+.error-msg { font-size: 13px; color: var(--mute-1); line-height: 1.8; }
+.error-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LOGIC / ABOUT SECTION
+═══════════════════════════════════════════════════════════════ */
+#logic {
+  border-top: 1px solid var(--border);
+  position: relative; z-index: 1;
+}
+
+.logic-header {
+  padding: clamp(60px,8vw,100px) clamp(20px,5vw,80px) 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+  align-items: end; margin-bottom: 60px;
+}
+.logic-eyebrow {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--mute-2);
+  text-transform: uppercase; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.logic-eyebrow::before { content: '//'; color: var(--cyan); }
+.logic-h2 {
+  font-size: clamp(28px,4vw,52px); font-weight: 700;
+  letter-spacing: -0.03em; color: var(--white);
+  line-height: 1.1;
+}
+.logic-desc {
+  font-size: 13px; color: var(--mute-1); line-height: 1.8;
+  align-self: end;
+}
+
+.logic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.logic-card {
+  background: var(--bg);
+  padding: clamp(32px,4vw,56px) clamp(24px,3vw,44px);
+  transition: background 0.3s; position: relative;
+}
+.logic-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--cyan);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.4s ease;
+}
+.logic-card:hover { background: var(--bg-1); }
+.logic-card:hover::before { transform: scaleX(1); }
+
+.logic-num {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--border-3);
+  margin-bottom: 32px;
+}
+.logic-title {
+  font-size: 16px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--white);
+  margin-bottom: 16px; line-height: 1.3;
+}
+.logic-body {
+  font-size: 14px; color: var(--text-1); line-height: 1.9;
+}
+
+.logic-formula-row {
+  padding: clamp(24px,3vw,40px) clamp(20px,5vw,80px);
+  background: var(--bg-1); border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+.logic-formula {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--mute-3); letter-spacing: 0.08em; line-height: 1.8;
+}
+.logic-formula-badge {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.15em; color: var(--mute-2);
+  padding: 4px 10px; border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-1);
+  position: relative; z-index: 1;
+}
+.footer-top {
+  padding: clamp(40px,5vw,64px) clamp(20px,5vw,80px);
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 48px; border-bottom: 1px solid var(--border);
+}
+.footer-brand {}
+.footer-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.footer-logo-mark {
+  width: 20px; height: 20px;
+  border: 1px solid var(--border-3);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 3px;
+}
+.footer-logo-mark span { background: var(--mute-2); display: block; }
+.footer-logo-mark span:nth-child(2),
+.footer-logo-mark span:nth-child(3) { opacity: 0.3; }
+.footer-logo-text {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.12em; color: var(--mute-1);
+}
+.footer-tagline {
+  font-size: 11px; color: var(--mute-3); line-height: 1.7; max-width: 200px;
+}
+
+.footer-col-title {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.2em; color: var(--mute-2);
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.footer-info {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--mute-3); line-height: 2;
+}
+.footer-links { display: flex; flex-direction: column; gap: 8px; }
+.footer-link {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.1em; color: var(--mute-2);
+  text-decoration: none; text-transform: uppercase;
+  transition: color 0.2s; display: flex; align-items: center; gap: 8px;
+}
+.footer-link:hover { color: var(--cyan); }
+.footer-link::before { content: '↗'; font-size: 9px; }
+
+.footer-bottom {
+  padding: 16px clamp(20px,5vw,80px);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 8px;
+}
+.footer-copy {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.12em; color: var(--mute-3);
+}
+.footer-engine {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.12em; color: var(--mute-3);
+  display: flex; align-items: center; gap: 8px;
+}
+.footer-engine::before {
+  content: ''; width: 4px; height: 4px;
+  background: var(--cyan); border-radius: 50%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  #hero { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+  .hero-left { border-right: none; }
+  .logic-header { grid-template-columns: 1fr; gap: 24px; }
+  .logic-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr; }
+  .nav-center { display: none; }
+  .input-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .nav-links a { display: none; }
+  .nav-links a:last-child { display: flex; }
+
+  /* 폼 영역 */
+  .form-main { padding: 32px 12px; }
+  .input-grid { gap: 1px; }
+  .input-group { padding: 16px 12px 20px; }
+  .form-submit-row { flex-direction: column; align-items: flex-start; }
+  .btn-run { width: 100%; justify-content: center; }
+  .form-section-title { font-size: 20px; }
+
+  /* 리포트 결과 카드 */
+  #reportSections { gap: 1px; }
+  .report-section-label { padding: 20px 12px 12px; font-size: 17px; }
+  .report-section:last-of-type .report-section-label { font-size: 20px; }
+  .report-section-text { padding: 4px 12px 20px; font-size: 14px; }
+  .report-card-art { padding: 10px 12px; }
+  .report-topbar { padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .report-name { font-size: 24px; }
+  .report-title-row { margin-bottom: 24px; }
+  .report-restart { margin-top: 32px; }
+
+  /* 히어로 */
+  .hero-left { padding: 80px 16px 60px; }
+  .hero-coords { display: none; }
+
+  /* 로직 섹션 */
+  .logic-header { padding: 48px 16px 0; }
+  .logic-card { padding: 32px 16px; }
+  .logic-formula-row { padding: 20px 16px; }
+
+  /* 푸터 */
+  .footer-top { padding: 32px 16px; }
+  .footer-bottom { padding: 14px 16px; }
+}
+
+/* ── NAV 유저 영역 ── */
+.nav-user { display: flex; align-items: center; gap: 10px; }
+.nav-username {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.1em; color: var(--mute-1);
+  max-width: 140px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.nav-logout-btn {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.1em; color: var(--mute-2);
+  background: transparent;
+  border: 1px solid var(--border-3); border-radius: 4px;
+  padding: 5px 10px; cursor: crosshair; transition: all 0.2s;
+}
+.nav-logout-btn:hover { color: var(--red); border-color: var(--red); }
+@media (max-width: 600px) { .nav-username { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     NAV
+══════════════════════════════════════════════════ -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-mark">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <span class="nav-logo-text">BZ<em>R</em></span>
+  </a>
+
+  <div class="nav-center">
+    <span class="nav-tag">DATA STRATEGY PLATFORM</span>
+    <div class="nav-status">SYSTEM ONLINE</div>
+  </div>
+
+  <div class="nav-links">
+    <a href="#input-flow">분석 시작</a>
+    <a href="#logic">시스템</a>
+    <a href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">채널</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-username" class="nav-username"></span>
+    <button class="nav-logout-btn" id="navLogoutBtn">로그아웃</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-line"></div>
+      <span class="hero-eyebrow-text">Astrological Data Intelligence v1.0</span>
+    </div>
+
+    <h1 class="hero-h1">
+      DATA<br>
+      <span class="accent" data-text="DRIVEN">DRIVEN</span>
+    </h1>
+    <h2 class="hero-h2">STRATEGY<br>INTELLIGENCE</h2>
+
+    <p class="hero-desc">
+      출생 데이터를 수학적으로 파싱합니다.<br>
+      감이 아닌 좌표. 직감이 아닌 궤적.<br>
+      0.1° 단위의 정밀 분석으로 전략을 도출합니다.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#input-flow" class="btn-primary">
+        분석 시작
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7H13M7 1L13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#logic" class="btn-ghost">시스템 구조</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <p class="hero-panel-label">NATAL CHART ANALYSIS / LIVE DATA</p>
+
+    <div class="hero-chart" id="heroChart">
+      <!-- bars injected by JS -->
+    </div>
+
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="hero-metric-val">12<span class="unit">H</span></div>
+        <div class="hero-metric-label">HOUSE SYSTEM</div>
+        <div class="hero-metric-delta">↑ PLACIDUS</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-val">0.1<span class="unit">°</span></div>
+        <div class="hero-metric-label">PRECISION</div>
+        <div class="hero-metric-delta">↑ ARC DEGREE</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-val">10<span class="unit">P</span></div>
+        <div class="hero-metric-label">PLANETS</div>
+        <div class="hero-metric-delta">↑ INCL CHIRON</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-coords">
+    <span class="hero-coord">37.5665°N</span>
+    <span class="hero-coord">126.9780°E</span>
+    <span class="hero-coord">UTC+9</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     TICKER
+══════════════════════════════════════════════════ -->
+<div class="ticker-wrap"><div class="ticker-track" id="t1"></div></div>
+
+<!-- ══════════════════════════════════════════════════
+     INPUT FLOW — SINGLE PAGE FORM
+══════════════════════════════════════════════════ -->
+<section id="input-flow">
+  <div class="form-main">
+    <div class="form-inner">
+
+      <!-- Section header -->
+      <div class="form-section-eyebrow" style="margin-bottom:12px">DATA ACQUISITION / INPUT REQUIRED</div>
+      <h2 class="form-section-title">출생 데이터 입력</h2>
+      <p class="form-section-desc">아래 4개 항목을 모두 입력한 뒤 분석을 시작하세요.</p>
+
+      <!-- ─── SINGLE-PAGE INPUT GRID ─── -->
+      <div class="input-grid" id="singlePageForm">
+
+        <!-- 01 이름 -->
+        <div class="input-group" id="ig-name">
+          <span class="input-group-num">01</span>
+          <label class="form-label" for="sp-name">식별자 / 성명</label>
+          <input class="form-input" id="sp-name" type="text"
+                 placeholder="홍길동" autocomplete="off">
+          <span class="input-group-hint">분석 리포트에 표시됩니다</span>
+        </div>
+
+        <!-- 02 생년월일 -->
+        <div class="input-group" id="ig-birth">
+          <span class="input-group-num">02</span>
+          <label class="form-label" for="sp-birth">출생 데이터 / 생년월일</label>
+          <input class="form-input" id="sp-birth" type="date">
+          <span class="input-group-hint">YYYY-MM-DD 형식</span>
+        </div>
+
+        <!-- 03 출생 시각 -->
+        <div class="input-group" id="ig-time">
+          <span class="input-group-num">03</span>
+          <label class="form-label" for="sp-time">출생 시각 <span style="color:var(--mute-3);font-size:9px">(선택)</span></label>
+          <input class="form-input" id="sp-time" type="time">
+          <span class="input-group-hint">모르는 경우 비워두면 됩니다</span>
+        </div>
+
+        <!-- 04 출생지 -->
+        <div class="input-group" id="ig-city">
+          <span class="input-group-num">04</span>
+          <label class="form-label" for="sp-city">출생지 / 도시</label>
+          <select class="city-select" id="sp-city">
+            <option value="">— 도시를 선택하세요 —</option>
+          </select>
+          <span class="input-group-hint">위도·경도 자동 매핑</span>
+        </div>
+
+      </div><!-- /.input-grid -->
+
+      <!-- Submit -->
+      <div class="form-submit-row">
+        <span class="form-submit-note">입력된 데이터는 암호화되어 처리됩니다</span>
+        <button class="btn btn-run" id="submitBtn" onclick="submitSingleForm()">
+          데이터 분석 시작
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7H13M7 1L13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- ─── STATES (Loading / Report / Error) ─── -->
+
+      <!-- LOADING STATE -->
+      <div id="loadingState" style="margin-top:48px">
+        <div class="loading-header">
+          <div class="loading-spinner"></div>
+          <span class="loading-tag">PROCESSING / KERNEL ACTIVE</span>
+        </div>
+        <div class="loading-title">
+          <span id="loadingMsg">데이터 패킷 수신 중...</span>
+          <span class="glitch-layer" id="loadingMsgGlitch">데이터 패킷 수신 중...</span>
+        </div>
+        <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+        <div class="loading-log" id="loadingLog"></div>
+      </div>
+
+      <!-- REPORT STATE -->
+      <div id="reportState" style="margin-top:48px">
+        <div class="report-topbar">
+          <span class="report-meta" id="reportMeta">ANALYSIS COMPLETE / BZR ENGINE v1.0</span>
+          <span class="report-badge">REPORT READY</span>
+        </div>
+        <div class="report-title-row">
+          <div class="report-name"><span id="reportName"></span>님의 전략 리포트</div>
+          <div class="report-subtitle" id="reportSubtitle">NATAL CHART DATA STRATEGY</div>
+        </div>
+        <div id="reportSections"></div>
+        <button class="report-restart" onclick="resetForm()">
+          ↺ &nbsp;새 분석 시작
+        </button>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div id="errorState" style="margin-top:48px">
+        <div class="error-header">
+          <div class="error-icon">!</div>
+          <span class="error-tag">TRANSMISSION ERROR</span>
+        </div>
+        <p class="error-code">데이터 전송 오류.</p>
+        <div class="error-body">
+          <p class="error-msg">서버와의 연결이 끊겼습니다.<br>네트워크 상태를 확인하고 다시 시도하십시오.</p>
+        </div>
+        <div class="error-actions">
+          <button class="btn btn-run" onclick="retrySubmit()">다시 시도 →</button>
+          <button class="report-restart" onclick="resetForm()">처음으로</button>
+        </div>
+      </div>
+
+      <!-- ─── HIDDEN LEGACY ELEMENTS (JS compatibility) ─── -->
+      <!-- These are required by the existing JS but not visible to users -->
+      <div style="display:none" aria-hidden="true">
+        <div id="inputState"></div>
+        <input id="formInput" type="text">
+        <select id="citySelect"></select>
+        <p id="formTag"></p>
+        <label id="formLabel"></label>
+        <button id="nextBtn"></button>
+        <button id="skipBtn"></button>
+        <div class="step-bars">
+          <div class="step-bar" id="bar0"></div>
+          <div class="step-bar" id="bar1"></div>
+          <div class="step-bar" id="bar2"></div>
+          <div class="step-bar" id="bar3"></div>
+        </div>
+      </div>
+
+    </div><!-- /.form-inner -->
+  </div><!-- /.form-main -->
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     LOGIC
+══════════════════════════════════════════════════ -->
+<section id="logic">
+  <div class="logic-header">
+    <div>
+      <p class="logic-eyebrow">SYSTEM ARCHITECTURE</p>
+      <h2 class="logic-h2">분석 엔진의<br>구조</h2>
+    </div>
+    <p class="logic-desc">
+      수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다.
+      출생 좌표에서 전략 변수까지, 모든 과정은 수학적으로 처리됩니다.
+    </p>
+  </div>
+
+  <div class="logic-grid">
+    <div class="logic-card">
+      <p class="logic-num">MODULE_01</p>
+      <h3 class="logic-title">출생 차트 구조 분석</h3>
+      <p class="logic-body">행성의 위치, 하우스 배치, 어스펙트 각도를 수학적으로 파싱합니다. 감이 아닌 0.1° 단위의 정밀 계산입니다.</p>
+    </div>
+    <div class="logic-card">
+      <p class="logic-num">MODULE_02</p>
+      <h3 class="logic-title">패턴 식별 엔진</h3>
+      <p class="logic-body">수천 개의 차트 데이터를 기반으로 반복 패턴을 추출합니다. 통계적으로 유의미한 배치만 보고합니다.</p>
+    </div>
+    <div class="logic-card">
+      <p class="logic-num">MODULE_03</p>
+      <h3 class="logic-title">전략 변수 도출</h3>
+      <p class="logic-body">에너지 피크 주기, 의사결정 최적 타이밍, 관계 역학 구조를 수치화된 전략 보고서로 출력합니다.</p>
+    </div>
+  </div>
+
+  <div class="logic-formula-row">
+    <p class="logic-formula">
+      ASC = arctan(cos(ε)·sin(RAMC) / (cos(RAMC)·sin(φ) − tan(δ)·cos(φ)))<br>
+      MC  = arctan(tan(RAMC) / cos(ε))
+    </p>
+    <span class="logic-formula-badge">BIAS: NONE &nbsp;|&nbsp; METHOD: PLACIDUS</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     TICKER 2
+══════════════════════════════════════════════════ -->
+<div class="ticker-wrap"><div class="ticker-track" id="t2"></div></div>
+
+<!-- ══════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="footer-logo-mark">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <span class="footer-logo-text">BZR</span>
+      </div>
+      <p class="footer-tagline">Data Strategy Intelligence Platform</p>
+    </div>
+
+    <div>
+      <p class="footer-col-title">사업자 정보</p>
+      <p class="footer-info">
+        상호: BZR ASTROLOGICAL LAB<br>
+        사업자등록번호: 000-00-00000<br>
+        통신판매업: 제 0000-서울-00000호<br>
+        대표: 버프가이 &nbsp;|&nbsp; contact@bzr.kr
+      </p>
+    </div>
+
+    <div>
+      <p class="footer-col-title">채널</p>
+      <div class="footer-links">
+        <a class="footer-link" href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 BZR ALL RIGHTS RESERVED</span>
+    <span class="footer-engine">ENGINE v1.0 / KERNEL ACTIVE</span>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT — ALL LOGIC PRESERVED EXACTLY
+══════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. CITY COORDINATE DATABASE
+// ═══════════════════════════════════════════════════════════════════
+const CITIES = [
+  // ── 서울 및 수도권 ───────────────────────────────────────────────
+  { name:"서울",          label:"서울특별시",               lat:"37.5665",  lng:"126.9780" },
+  { name:"수원",          label:"경기 수원시",              lat:"37.2636",  lng:"127.0286" },
+  { name:"성남",          label:"경기 성남시",              lat:"37.4196",  lng:"127.1265" },
+  { name:"용인",          label:"경기 용인시",              lat:"37.2411",  lng:"127.1776" },
+  { name:"고양",          label:"경기 고양시",              lat:"37.6584",  lng:"126.8320" },
+  { name:"부천",          label:"경기 부천시",              lat:"37.5034",  lng:"126.7660" },
+  { name:"안산",          label:"경기 안산시",              lat:"37.3219",  lng:"126.8308" },
+  { name:"안양",          label:"경기 안양시",              lat:"37.3943",  lng:"126.9568" },
+  { name:"남양주",        label:"경기 남양주시",            lat:"37.6360",  lng:"127.2165" },
+  { name:"화성",          label:"경기 화성시",              lat:"37.1995",  lng:"126.8312" },
+  { name:"평택",          label:"경기 평택시",              lat:"36.9921",  lng:"127.1128" },
+  { name:"의정부",        label:"경기 의정부시",            lat:"37.7381",  lng:"127.0337" },
+  { name:"파주",          label:"경기 파주시",              lat:"37.7601",  lng:"126.7800" },
+  { name:"시흥",          label:"경기 시흥시",              lat:"37.3800",  lng:"126.8030" },
+  { name:"김포",          label:"경기 김포시",              lat:"37.6152",  lng:"126.7157" },
+  { name:"광주(경기)",    label:"경기 광주시",              lat:"37.4296",  lng:"127.2559" },
+  { name:"광명",          label:"경기 광명시",              lat:"37.4786",  lng:"126.8644" },
+  { name:"군포",          label:"경기 군포시",              lat:"37.3614",  lng:"126.9352" },
+  { name:"이천",          label:"경기 이천시",              lat:"37.2720",  lng:"127.4350" },
+  { name:"오산",          label:"경기 오산시",              lat:"37.1499",  lng:"127.0774" },
+  { name:"하남",          label:"경기 하남시",              lat:"37.5394",  lng:"127.2149" },
+  { name:"구리",          label:"경기 구리시",              lat:"37.5943",  lng:"127.1296" },
+  { name:"양주",          label:"경기 양주시",              lat:"37.7852",  lng:"127.0457" },
+  { name:"포천",          label:"경기 포천시",              lat:"37.8950",  lng:"127.2002" },
+  { name:"여주",          label:"경기 여주시",              lat:"37.2982",  lng:"127.6378" },
+  { name:"동두천",        label:"경기 동두천시",            lat:"37.9037",  lng:"127.0606" },
+  { name:"과천",          label:"경기 과천시",              lat:"37.4290",  lng:"126.9879" },
+  { name:"의왕",          label:"경기 의왕시",              lat:"37.3445",  lng:"126.9686" },
+  { name:"가평",          label:"경기 가평군",              lat:"37.8316",  lng:"127.5108" },
+  { name:"양평",          label:"경기 양평군",              lat:"37.4914",  lng:"127.4877" },
+  { name:"연천",          label:"경기 연천군",              lat:"38.0965",  lng:"127.0752" },
+
+  // ── 인천 ────────────────────────────────────────────────────────
+  { name:"인천",          label:"인천광역시",               lat:"37.4563",  lng:"126.7052" },
+
+  // ── 강원도 ──────────────────────────────────────────────────────
+  { name:"춘천",          label:"강원 춘천시",              lat:"37.8813",  lng:"127.7300" },
+  { name:"원주",          label:"강원 원주시",              lat:"37.3422",  lng:"127.9202" },
+  { name:"강릉",          label:"강원 강릉시",              lat:"37.7519",  lng:"128.8761" },
+  { name:"동해",          label:"강원 동해시",              lat:"37.5244",  lng:"129.1142" },
+  { name:"태백",          label:"강원 태백시",              lat:"37.1651",  lng:"128.9855" },
+  { name:"속초",          label:"강원 속초시",              lat:"38.2070",  lng:"128.5918" },
+  { name:"삼척",          label:"강원 삼척시",              lat:"37.4496",  lng:"129.1649" },
+  { name:"홍천",          label:"강원 홍천군",              lat:"37.6969",  lng:"127.8886" },
+  { name:"횡성",          label:"강원 횡성군",              lat:"37.4914",  lng:"127.9849" },
+  { name:"영월",          label:"강원 영월군",              lat:"37.1838",  lng:"128.4616" },
+  { name:"평창",          label:"강원 평창군",              lat:"37.3703",  lng:"128.3908" },
+  { name:"정선",          label:"강원 정선군",              lat:"37.3797",  lng:"128.6600" },
+  { name:"철원",          label:"강원 철원군",              lat:"38.1471",  lng:"127.3132" },
+  { name:"화천",          label:"강원 화천군",              lat:"38.1066",  lng:"127.7083" },
+  { name:"양구",          label:"강원 양구군",              lat:"38.1060",  lng:"127.9899" },
+  { name:"인제",          label:"강원 인제군",              lat:"38.0692",  lng:"128.1706" },
+  { name:"고성(강원)",    label:"강원 고성군",              lat:"38.3804",  lng:"128.4673" },
+  { name:"양양",          label:"강원 양양군",              lat:"38.0753",  lng:"128.6191" },
+
+  // ── 충청북도 ────────────────────────────────────────────────────
+  { name:"청주",          label:"충북 청주시",              lat:"36.6424",  lng:"127.4890" },
+  { name:"충주",          label:"충북 충주시",              lat:"36.9910",  lng:"127.9259" },
+  { name:"제천",          label:"충북 제천시",              lat:"37.1327",  lng:"128.1909" },
+  { name:"보은",          label:"충북 보은군",              lat:"36.4896",  lng:"127.7296" },
+  { name:"옥천",          label:"충북 옥천군",              lat:"36.3062",  lng:"127.5711" },
+  { name:"영동",          label:"충북 영동군",              lat:"36.1749",  lng:"127.7839" },
+  { name:"증평",          label:"충북 증평군",              lat:"36.7853",  lng:"127.5814" },
+  { name:"진천",          label:"충북 진천군",              lat:"36.8554",  lng:"127.4356" },
+  { name:"괴산",          label:"충북 괴산군",              lat:"36.8153",  lng:"127.7872" },
+  { name:"음성",          label:"충북 음성군",              lat:"36.9397",  lng:"127.6904" },
+  { name:"단양",          label:"충북 단양군",              lat:"36.9847",  lng:"128.3654" },
+
+  // ── 충청남도 ────────────────────────────────────────────────────
+  { name:"대전",          label:"대전광역시",               lat:"36.3504",  lng:"127.3845" },
+  { name:"천안",          label:"충남 천안시",              lat:"36.8151",  lng:"127.1139" },
+  { name:"공주",          label:"충남 공주시",              lat:"36.4465",  lng:"127.1190" },
+  { name:"보령",          label:"충남 보령시",              lat:"36.3332",  lng:"126.6128" },
+  { name:"아산",          label:"충남 아산시",              lat:"36.7898",  lng:"127.0020" },
+  { name:"서산",          label:"충남 서산시",              lat:"36.7847",  lng:"126.4503" },
+  { name:"논산",          label:"충남 논산시",              lat:"36.1874",  lng:"127.0987" },
+  { name:"계룡",          label:"충남 계룡시",              lat:"36.2742",  lng:"127.2491" },
+  { name:"당진",          label:"충남 당진시",              lat:"36.8896",  lng:"126.6458" },
+  { name:"금산",          label:"충남 금산군",              lat:"36.1088",  lng:"127.4882" },
+  { name:"부여",          label:"충남 부여군",              lat:"36.2752",  lng:"126.9096" },
+  { name:"서천",          label:"충남 서천군",              lat:"36.0799",  lng:"126.6917" },
+  { name:"청양",          label:"충남 청양군",              lat:"36.4594",  lng:"126.8025" },
+  { name:"홍성",          label:"충남 홍성군",              lat:"36.6013",  lng:"126.6606" },
+  { name:"예산",          label:"충남 예산군",              lat:"36.6801",  lng:"126.8502" },
+  { name:"태안",          label:"충남 태안군",              lat:"36.7455",  lng:"126.2981" },
+
+  // ── 전라북도 ────────────────────────────────────────────────────
+  { name:"전주",          label:"전북 전주시",              lat:"35.8242",  lng:"127.1480" },
+  { name:"군산",          label:"전북 군산시",              lat:"35.9677",  lng:"126.7368" },
+  { name:"익산",          label:"전북 익산시",              lat:"35.9483",  lng:"126.9577" },
+  { name:"정읍",          label:"전북 정읍시",              lat:"35.5699",  lng:"126.8559" },
+  { name:"남원",          label:"전북 남원시",              lat:"35.4164",  lng:"127.3901" },
+  { name:"김제",          label:"전북 김제시",              lat:"35.8034",  lng:"126.8808" },
+  { name:"완주",          label:"전북 완주군",              lat:"35.9054",  lng:"127.1618" },
+  { name:"진안",          label:"전북 진안군",              lat:"35.7920",  lng:"127.4246" },
+  { name:"무주",          label:"전북 무주군",              lat:"36.0078",  lng:"127.6607" },
+  { name:"장수",          label:"전북 장수군",              lat:"35.6471",  lng:"127.5212" },
+  { name:"임실",          label:"전북 임실군",              lat:"35.6175",  lng:"127.2896" },
+  { name:"순창",          label:"전북 순창군",              lat:"35.3742",  lng:"127.1378" },
+  { name:"고창",          label:"전북 고창군",              lat:"35.4358",  lng:"126.7021" },
+  { name:"부안",          label:"전북 부안군",              lat:"35.7319",  lng:"126.7334" },
+
+  // ── 전라남도 ────────────────────────────────────────────────────
+  { name:"광주",          label:"광주광역시",               lat:"35.1595",  lng:"126.8526" },
+  { name:"목포",          label:"전남 목포시",              lat:"34.8118",  lng:"126.3922" },
+  { name:"여수",          label:"전남 여수시",              lat:"34.7604",  lng:"127.6622" },
+  { name:"순천",          label:"전남 순천시",              lat:"34.9506",  lng:"127.4872" },
+  { name:"나주",          label:"전남 나주시",              lat:"35.0160",  lng:"126.7107" },
+  { name:"광양",          label:"전남 광양시",              lat:"34.9407",  lng:"127.6956" },
+  { name:"담양",          label:"전남 담양군",              lat:"35.3216",  lng:"126.9882" },
+  { name:"곡성",          label:"전남 곡성군",              lat:"35.2818",  lng:"127.2919" },
+  { name:"구례",          label:"전남 구례군",              lat:"35.2026",  lng:"127.4626" },
+  { name:"고흥",          label:"전남 고흥군",              lat:"34.6043",  lng:"127.2793" },
+  { name:"보성",          label:"전남 보성군",              lat:"34.7715",  lng:"127.0803" },
+  { name:"화순",          label:"전남 화순군",              lat:"35.0649",  lng:"126.9865" },
+  { name:"장흥",          label:"전남 장흥군",              lat:"34.6815",  lng:"126.9073" },
+  { name:"강진",          label:"전남 강진군",              lat:"34.6424",  lng:"126.7672" },
+  { name:"해남",          label:"전남 해남군",              lat:"34.5739",  lng:"126.5990" },
+  { name:"영암",          label:"전남 영암군",              lat:"34.8001",  lng:"126.6966" },
+  { name:"무안",          label:"전남 무안군",              lat:"34.9900",  lng:"126.4815" },
+  { name:"함평",          label:"전남 함평군",              lat:"35.0653",  lng:"126.5163" },
+  { name:"영광",          label:"전남 영광군",              lat:"35.2771",  lng:"126.5121" },
+  { name:"장성",          label:"전남 장성군",              lat:"35.3020",  lng:"126.7847" },
+  { name:"완도",          label:"전남 완도군",              lat:"34.3105",  lng:"126.7551" },
+  { name:"진도",          label:"전남 진도군",              lat:"34.4868",  lng:"126.2637" },
+  { name:"신안",          label:"전남 신안군",              lat:"34.8300",  lng:"126.1070" },
+
+  // ── 경상북도 ────────────────────────────────────────────────────
+  { name:"대구",          label:"대구광역시",               lat:"35.8714",  lng:"128.6014" },
+  { name:"포항",          label:"경북 포항시",              lat:"36.0190",  lng:"129.3435" },
+  { name:"경주",          label:"경북 경주시",              lat:"35.8562",  lng:"129.2247" },
+  { name:"김천",          label:"경북 김천시",              lat:"36.1398",  lng:"128.1136" },
+  { name:"안동",          label:"경북 안동시",              lat:"36.5684",  lng:"128.7294" },
+  { name:"구미",          label:"경북 구미시",              lat:"36.1195",  lng:"128.3446" },
+  { name:"영주",          label:"경북 영주시",              lat:"36.8057",  lng:"128.6239" },
+  { name:"영천",          label:"경북 영천시",              lat:"35.9736",  lng:"128.9383" },
+  { name:"상주",          label:"경북 상주시",              lat:"36.4109",  lng:"128.1588" },
+  { name:"문경",          label:"경북 문경시",              lat:"36.5860",  lng:"128.1864" },
+  { name:"경산",          label:"경북 경산시",              lat:"35.8248",  lng:"128.7411" },
+  { name:"군위",          label:"경북 군위군",              lat:"36.2399",  lng:"128.5700" },
+  { name:"의성",          label:"경북 의성군",              lat:"36.3526",  lng:"128.6973" },
+  { name:"청송",          label:"경북 청송군",              lat:"36.4358",  lng:"129.0571" },
+  { name:"영양",          label:"경북 영양군",              lat:"36.6674",  lng:"129.1128" },
+  { name:"영덕",          label:"경북 영덕군",              lat:"36.4153",  lng:"129.3650" },
+  { name:"청도",          label:"경북 청도군",              lat:"35.6474",  lng:"128.7360" },
+  { name:"고령",          label:"경북 고령군",              lat:"35.7272",  lng:"128.2635" },
+  { name:"성주",          label:"경북 성주군",              lat:"35.9189",  lng:"128.2830" },
+  { name:"칠곡",          label:"경북 칠곡군",              lat:"35.9958",  lng:"128.4015" },
+  { name:"예천",          label:"경북 예천군",              lat:"36.6577",  lng:"128.2946" },
+  { name:"봉화",          label:"경북 봉화군",              lat:"36.8931",  lng:"128.7322" },
+  { name:"울진",          label:"경북 울진군",              lat:"36.9931",  lng:"129.4007" },
+  { name:"울릉",          label:"경북 울릉군",              lat:"37.4844",  lng:"130.9058" },
+
+  // ── 경상남도 ────────────────────────────────────────────────────
+  { name:"부산",          label:"부산광역시",               lat:"35.1796",  lng:"129.0756" },
+  { name:"울산",          label:"울산광역시",               lat:"35.5384",  lng:"129.3114" },
+  { name:"창원",          label:"경남 창원시",              lat:"35.2279",  lng:"128.6811" },
+  { name:"진주",          label:"경남 진주시",              lat:"35.1799",  lng:"128.1076" },
+  { name:"통영",          label:"경남 통영시",              lat:"34.8544",  lng:"128.4330" },
+  { name:"사천",          label:"경남 사천시",              lat:"35.0038",  lng:"128.0643" },
+  { name:"김해",          label:"경남 김해시",              lat:"35.2285",  lng:"128.8892" },
+  { name:"밀양",          label:"경남 밀양시",              lat:"35.4912",  lng:"128.7463" },
+  { name:"거제",          label:"경남 거제시",              lat:"34.8799",  lng:"128.6210" },
+  { name:"양산",          label:"경남 양산시",              lat:"35.3350",  lng:"129.0374" },
+  { name:"의령",          label:"경남 의령군",              lat:"35.3224",  lng:"128.2619" },
+  { name:"함안",          label:"경남 함안군",              lat:"35.2726",  lng:"128.4063" },
+  { name:"창녕",          label:"경남 창녕군",              lat:"35.5444",  lng:"128.4926" },
+  { name:"고성(경남)",    label:"경남 고성군",              lat:"34.9752",  lng:"128.3237" },
+  { name:"남해",          label:"경남 남해군",              lat:"34.8376",  lng:"127.8924" },
+  { name:"하동",          label:"경남 하동군",              lat:"35.0670",  lng:"127.7513" },
+  { name:"산청",          label:"경남 산청군",              lat:"35.4154",  lng:"127.8736" },
+  { name:"함양",          label:"경남 함양군",              lat:"35.5200",  lng:"127.7260" },
+  { name:"거창",          label:"경남 거창군",              lat:"35.6872",  lng:"127.9098" },
+  { name:"합천",          label:"경남 합천군",              lat:"35.5666",  lng:"128.1651" },
+
+  // ── 제주 ────────────────────────────────────────────────────────
+  { name:"제주",          label:"제주특별자치도 제주시",    lat:"33.4996",  lng:"126.5312" },
+  { name:"서귀포",        label:"제주특별자치도 서귀포시",  lat:"33.2541",  lng:"126.5600" },
+  { name:"도쿄",        label:"도쿄 (Tokyo)",             lat:"35.6762",  lng:"139.6503" },
+  { name:"오사카",      label:"오사카 (Osaka)",           lat:"34.6937",  lng:"135.5023" },
+  { name:"베이징",      label:"베이징 (Beijing)",         lat:"39.9042",  lng:"116.4074" },
+  { name:"상하이",      label:"상하이 (Shanghai)",        lat:"31.2304",  lng:"121.4737" },
+  { name:"홍콩",        label:"홍콩 (Hong Kong)",         lat:"22.3193",  lng:"114.1694" },
+  { name:"타이페이",    label:"타이페이 (Taipei)",        lat:"25.0330",  lng:"121.5654" },
+  { name:"싱가포르",    label:"싱가포르 (Singapore)",     lat:"1.3521",   lng:"103.8198" },
+  { name:"방콕",        label:"방콕 (Bangkok)",           lat:"13.7563",  lng:"100.5018" },
+  { name:"자카르타",    label:"자카르타 (Jakarta)",       lat:"-6.2088",  lng:"106.8456" },
+  { name:"하노이",      label:"하노이 (Hanoi)",           lat:"21.0285",  lng:"105.8542" },
+  { name:"런던",        label:"런던 (London)",            lat:"51.5074",  lng:"-0.1278"  },
+  { name:"파리",        label:"파리 (Paris)",             lat:"48.8566",  lng:"2.3522"   },
+  { name:"베를린",      label:"베를린 (Berlin)",          lat:"52.5200",  lng:"13.4050"  },
+  { name:"로마",        label:"로마 (Rome)",              lat:"41.9028",  lng:"12.4964"  },
+  { name:"마드리드",    label:"마드리드 (Madrid)",        lat:"40.4168",  lng:"-3.7038"  },
+  { name:"바르셀로나",  label:"바르셀로나 (Barcelona)",   lat:"41.3851",  lng:"2.1734"   },
+  { name:"암스테르담",  label:"암스테르담 (Amsterdam)",   lat:"52.3676",  lng:"4.9041"   },
+  { name:"빈",          label:"빈 (Vienna)",              lat:"48.2082",  lng:"16.3738"  },
+  { name:"취리히",      label:"취리히 (Zurich)",          lat:"47.3769",  lng:"8.5417"   },
+  { name:"뉴욕",        label:"뉴욕 (New York)",          lat:"40.7128",  lng:"-74.0060" },
+  { name:"로스앤젤레스",label:"로스앤젤레스 (LA)",        lat:"34.0522",  lng:"-118.2437"},
+  { name:"시카고",      label:"시카고 (Chicago)",         lat:"41.8781",  lng:"-87.6298" },
+  { name:"샌프란시스코",label:"샌프란시스코 (SF)",        lat:"37.7749",  lng:"-122.4194"},
+  { name:"워싱턴DC",    label:"워싱턴DC (Washington DC)", lat:"38.9072",  lng:"-77.0369" },
+  { name:"토론토",      label:"토론토 (Toronto)",         lat:"43.6532",  lng:"-79.3832" },
+  { name:"밴쿠버",      label:"밴쿠버 (Vancouver)",       lat:"49.2827",  lng:"-123.1207"},
+  { name:"상파울루",    label:"상파울루 (São Paulo)",     lat:"-23.5505", lng:"-46.6333" },
+  { name:"시드니",      label:"시드니 (Sydney)",          lat:"-33.8688", lng:"151.2093" },
+  { name:"멜버른",      label:"멜버른 (Melbourne)",       lat:"-37.8136", lng:"144.9631" },
+  { name:"두바이",      label:"두바이 (Dubai)",           lat:"25.2048",  lng:"55.2708"  },
+  { name:"뭄바이",      label:"뭄바이 (Mumbai)",          lat:"19.0760",  lng:"72.8777"  },
+  { name:"델리",        label:"델리 (Delhi)",             lat:"28.6139",  lng:"77.2090"  },
+  { name:"모스크바",    label:"모스크바 (Moscow)",        lat:"55.7558",  lng:"37.6173"  },
+  { name:"이스탄불",    label:"이스탄불 (Istanbul)",      lat:"41.0082",  lng:"28.9784"  },
+  { name:"카이로",      label:"카이로 (Cairo)",           lat:"30.0444",  lng:"31.2357"  },
+  { name:"요하네스버그",label:"요하네스버그 (Joburg)",    lat:"-26.2041", lng:"28.0473"  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. CONFIG
+// ═══════════════════════════════════════════════════════════════════
+const MAKE_WEBHOOK = 'https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0';
+
+const STEPS = [
+  { id:'name',  label:'식별자',      type:'text',   placeholder:'성명을 입력하세요',  hint:'분석 대상 초기화 중...',         skippable:false, useSelect:false },
+  { id:'birth', label:'출생 데이터', type:'date',   placeholder:'생년월일 선택',       hint:'항성력 데이터베이스 조회 중...', skippable:false, useSelect:false },
+  { id:'time',  label:'출생 시각',   type:'time',   placeholder:'HH:MM',              hint:'천구 좌표 계산 중...',            skippable:true,  useSelect:false },
+  { id:'city',  label:'출생지',      type:'select', placeholder:'도시를 선택하세요',   hint:'지리 좌표 매핑 중...',            skippable:false, useSelect:true  },
+];
+
+const LOADING_MSGS = [
+  '데이터 패킷 수신 중...',
+  '궤적 연산 중...',
+  '행성 벡터 교차 분석 중...',
+  '패턴 매트릭스 재조립 중...',
+  '전략 변수 수치화 중...',
+  '최종 리포트 컴파일 중...',
+];
+
+const LOG_LINES = [
+  { time:'00:00:01', status:'OK', text:'출생 좌표 매핑 완료' },
+  { time:'00:00:02', status:'OK', text:'항성력 데이터베이스 조회 완료' },
+  { time:'00:00:03', status:'RUN', text:'ASC / MC 정밀 계산 중...' },
+  { time:'00:00:05', status:'RUN', text:'행성 배치 파싱 중...' },
+  { time:'00:00:07', status:'OK', text:'하우스 커스프 정렬 완료' },
+  { time:'00:00:09', status:'RUN', text:'패턴 식별 엔진 가동...' },
+  { time:'00:00:11', status:'RUN', text:'전략 변수 도출 — 리포트 생성 중...' },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. STATE
+// ═══════════════════════════════════════════════════════════════════
+let currentStep = 0;
+const formData  = { name:'', birth:'', time:'', city:'', lat:'', lng:'' };
+let loaderTimers = [];
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. DOM
+// ═══════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const inputState   = $('inputState');
+const loadingState = $('loadingState');
+const reportState  = $('reportState');
+const errorState   = $('errorState');
+const formInput    = $('formInput');
+const citySelect   = $('citySelect');
+const formTag      = $('formTag');
+const formLabel    = $('formLabel');
+const nextBtn      = $('nextBtn');
+const skipBtn      = $('skipBtn');
+const loadingMsg   = $('loadingMsg');
+const loadingMsgGlitch = $('loadingMsgGlitch');
+const loadingBar   = $('loadingBar');
+const loadingLog   = $('loadingLog');
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. HERO CHART (decorative)
+// ═══════════════════════════════════════════════════════════════════
+(function buildHeroChart() {
+  const heights = [35,52,41,68,45,82,58,91,73,61,44,56,38,70,85,63,47,79,55,66,43,88,51,74,60];
+  const chart = document.getElementById('heroChart');
+  if (!chart) return;
+  heights.forEach((h, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar' + (i === 17 ? ' highlight' : '');
+    bar.style.setProperty('--h', h + '%');
+    chart.appendChild(bar);
+  });
+  setTimeout(() => chart.querySelectorAll('.chart-bar').forEach(b => b.classList.add('animate')), 200);
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// 6. TICKER
+// ═══════════════════════════════════════════════════════════════════
+const TICK_DATA = [
+  ['ASC', '23.4° VIRGO'], ['MC', '15.1° GEMINI'], ['SUN', '07.8° SCORPIO'],
+  ['MOON', '19.2° AQUARIUS'], ['MERCURY', '02.5° LIBRA'], ['VENUS', '28.9° LEO'],
+  ['MARS', '11.3° CAPRICORN'], ['JUPITER', '14.7° ARIES'], ['SATURN', '05.6° PISCES'],
+  ['N.NODE', '08.1° TAURUS'], ['CHIRON', '16.4° ARIES'], ['LILITH', '22.0° CANCER'],
+];
+function buildTicker(id) {
+  const el = $(id);
+  if (!el) return;
+  const doubled = [...TICK_DATA, ...TICK_DATA];
+  el.innerHTML = doubled.map(([k,v]) =>
+    `<span class="ticker-item"><span class="ticker-key">${k}</span><span class="ticker-val pos">${v}</span></span>`
+  ).join('');
+}
+buildTicker('t1'); buildTicker('t2');
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. CITY SELECT POPULATE
+// ═══════════════════════════════════════════════════════════════════
+citySelect.innerHTML = '<option value="">— 도시를 선택하세요 —</option>';
+CITIES.forEach(c => {
+  const o = document.createElement('option');
+  o.value = c.name; o.textContent = c.label;
+  citySelect.appendChild(o);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 8. SIDEBAR STEP UPDATER
+// ═══════════════════════════════════════════════════════════════════
+function updateSidebar() {
+  for (let i = 0; i < 4; i++) {
+    const el = $('si' + i);
+    if (!el) continue;
+    el.className = 'step-item' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    const iconEl = el.querySelector('.step-icon');
+    if (iconEl) {
+      if (i === currentStep) {
+        iconEl.innerHTML = '<span class="step-icon-dot"></span>';
+      } else {
+        iconEl.innerHTML = '';
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. FORM LOGIC
+// ═══════════════════════════════════════════════════════════════════
+function updateBars() {
+  STEPS.forEach((_,i) => {
+    $('bar'+i).className = 'step-bar' + (i<currentStep?' done':i===currentStep?' active':'');
+  });
+}
+
+function renderStep() {
+  const s = STEPS[currentStep];
+  formTag.textContent   = `INPUT ${currentStep+1}/4 / ${s.hint}`;
+  formLabel.textContent = s.label;
+  if (s.useSelect) {
+    formInput.style.display  = 'none';
+    citySelect.style.display = 'block';
+    citySelect.value = '';
+  } else {
+    formInput.style.display  = 'block';
+    citySelect.style.display = 'none';
+    formInput.type        = s.type;
+    formInput.placeholder = s.placeholder;
+    formInput.value       = '';
+  }
+  skipBtn.style.display = s.skippable ? 'inline-block' : 'none';
+  // Update next button label
+  const btnLabel = currentStep < STEPS.length-1
+    ? `다음 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6H11M6 1L11 6L6 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    : `분석 실행 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6H11M6 1L11 6L6 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  nextBtn.innerHTML = btnLabel;
+  updateBars();
+  updateSidebar();
+  setTimeout(() => (s.useSelect ? citySelect : formInput).focus(), 60);
+}
+
+formInput.addEventListener('keydown', e => { if (e.key==='Enter') advance(); });
+
+function advance(skip=false) {
+  const s = STEPS[currentStep];
+  let val = '';
+  if (s.useSelect) {
+    val = citySelect.value;
+    if (!val) {
+      citySelect.style.borderBottomColor='var(--cyan)';
+      setTimeout(()=>citySelect.style.borderBottomColor='',600);
+      return;
+    }
+    const city = CITIES.find(c => c.name===val);
+    formData.lat = city ? city.lat : '';
+    formData.lng = city ? city.lng : '';
+  } else {
+    val = skip ? '' : formInput.value.trim();
+    if (!val && !s.skippable) {
+      formInput.style.borderBottomColor='var(--cyan)';
+      setTimeout(()=>formInput.style.borderBottomColor='',600);
+      return;
+    }
+  }
+  formData[s.id] = val;
+
+  inputState.style.cssText += ';opacity:0;transform:translateY(-10px);transition:opacity 0.25s,transform 0.25s';
+  setTimeout(() => {
+    inputState.style.cssText += ';opacity:1;transform:translateY(0)';
+    if (currentStep < STEPS.length-1) { currentStep++; renderStep(); }
+    else submitToAPI();
+  }, 250);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. BUILD PAYLOAD
+// ═══════════════════════════════════════════════════════════════════
+function buildPayload() {
+  const parts = (formData.birth||'').split('-');
+  const tParts= (formData.time ||'00:00').split(':');
+  return {
+    year:      parts[0]  || '',
+    month:     parts[1]  || '',
+    date:      parts[2]  || '',
+    hours:     tParts[0] || '00',
+    minutes:   tParts[1] || '00',
+    latitude:  formData.lat,
+    longitude: formData.lng,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. LOADING ANIMATION
+// ═══════════════════════════════════════════════════════════════════
+function startLoader() {
+  loadingBar.style.width = '0%';
+  loadingMsg.textContent = LOADING_MSGS[0];
+  loadingMsgGlitch.textContent = LOADING_MSGS[0];
+
+  // Build log lines
+  loadingLog.innerHTML = LOG_LINES.map(l =>
+    `<div class="log-line">
+      <span class="log-time">${l.time}</span>
+      <span class="log-status">[${l.status}]</span>
+      <span class="log-text">${l.text}</span>
+    </div>`
+  ).join('');
+
+  loaderTimers = [];
+
+  // Message rotation
+  let mi = 0;
+  const mt = setInterval(()=>{
+    mi = (mi+1) % LOADING_MSGS.length;
+    loadingMsg.style.opacity = '0';
+    setTimeout(()=>{
+      loadingMsg.textContent = LOADING_MSGS[mi];
+      loadingMsgGlitch.textContent = LOADING_MSGS[mi];
+      loadingMsg.style.opacity = '1';
+      loadingMsg.style.transition = 'opacity 0.4s';
+    }, 300);
+  }, 2400);
+  loaderTimers.push(mt);
+
+  // Progress bar creep
+  let prog = 0;
+  const bt = setInterval(()=>{
+    if (prog < 88) { prog += (88-prog)*0.07 + 0.5; loadingBar.style.width = prog + '%'; }
+  }, 300);
+  loaderTimers.push(bt);
+
+  // Log lines reveal
+  const logEls = loadingLog.querySelectorAll('.log-line');
+  logEls.forEach((el, i) => {
+    const t = setTimeout(()=>el.classList.add('show'), 500 + i*800);
+    loaderTimers.push(t);
+  });
+}
+
+function stopLoader() {
+  loaderTimers.forEach(t => { clearInterval(t); clearTimeout(t); });
+  loaderTimers = [];
+  loadingBar.style.transition = 'width 0.4s ease';
+  loadingBar.style.width = '100%';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. STATE HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function hideAll() {
+  [loadingState, reportState, errorState].forEach(el => {
+    el.classList.remove('active'); el.style.display = '';
+  });
+  inputState.style.display = 'block';
+}
+function showOnly(el) {
+  inputState.style.display = 'none';
+  [loadingState, reportState, errorState].forEach(e => {
+    e.classList.remove('active'); e.style.display = '';
+  });
+  el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. SUBMIT
+// ═══════════════════════════════════════════════════════════════════
+async function submitToAPI() {
+  const payload = buildPayload();
+  console.log('[BZR] → Make.com payload:', payload);
+
+  showOnly(loadingState);
+  startLoader();
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+
+  try {
+    const res = await fetch(MAKE_WEBHOOK, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const ct = res.headers.get('content-type') || '';
+    let data = {};
+    if (ct.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const raw = await res.text();
+      try { data = JSON.parse(raw); } catch { data = { report: raw }; }
+    }
+
+    stopLoader();
+    renderReport(data);
+
+  } catch(err) {
+    console.error('[BZR] Webhook error:', err);
+    stopLoader();
+    showOnly(errorState);
+  }
+}
+
+function retrySubmit() { submitToAPI(); }
+
+// ═══════════════════════════════════════════════════════════════════
+// 14. REPORT RENDERER
+// ═══════════════════════════════════════════════════════════════════
+
+// SVG line art patterns for card headers (cycle through these)
+const CARD_ARTS = [
+  // Grid pattern
+  `<svg viewBox="0 0 300 56" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="0" y1="28" x2="300" y2="28" stroke="#00f0ff" stroke-width="0.5" stroke-dasharray="4 8"/>
+    <line x1="0" y1="14" x2="300" y2="14" stroke="#1a1a1a" stroke-width="0.5"/>
+    <line x1="0" y1="42" x2="300" y2="42" stroke="#1a1a1a" stroke-width="0.5"/>
+    ${Array.from({length:16},(_,i)=>`<line x1="${i*20}" y1="0" x2="${i*20}" y2="56" stroke="#1a1a1a" stroke-width="0.5"/>`).join('')}
+    <circle cx="80" cy="28" r="3" fill="none" stroke="#00f0ff" stroke-width="0.5"/>
+    <circle cx="200" cy="28" r="3" fill="none" stroke="#00f0ff" stroke-width="0.5"/>
+    <line x1="83" y1="28" x2="197" y2="28" stroke="#00f0ff" stroke-width="0.5"/>
+  </svg>`,
+  // Waveform
+  `<svg viewBox="0 0 300 56" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,28 20,18 40,38 60,12 80,44 100,22 120,34 140,10 160,46 180,20 200,32 220,16 240,40 260,24 280,28 300,28" stroke="#00f0ff" stroke-width="0.75" fill="none"/>
+    <polyline points="0,28 20,32 40,24 60,36 80,20 100,30 120,26 140,34 160,18 180,32 200,24 220,30 240,22 260,34 280,28 300,28" stroke="#1a1a1a" stroke-width="0.5" fill="none"/>
+  </svg>`,
+  // Scatter / orbit
+  `<svg viewBox="0 0 300 56" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="150" cy="28" rx="120" ry="18" stroke="#1a1a1a" stroke-width="0.5"/>
+    <ellipse cx="150" cy="28" rx="70" ry="10" stroke="#00f0ff" stroke-width="0.5" stroke-dasharray="3 6"/>
+    ${[[40,20],[100,10],[180,46],[240,16],[260,38],[120,44],[70,32]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2" fill="#00f0ff" opacity="0.5"/>`).join('')}
+    <circle cx="150" cy="28" r="4" fill="none" stroke="#00f0ff" stroke-width="0.5"/>
+  </svg>`,
+  // Bar chart
+  `<svg viewBox="0 0 300 56" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+    ${[22,34,18,42,28,50,38,30,44,20,36,26,46,32,40].map((h,i)=>`
+      <rect x="${i*20+2}" y="${56-h}" width="16" height="${h}" fill="#1a1a1a"/>
+      <rect x="${i*20+2}" y="${56-h}" width="16" height="1" fill="#00f0ff" opacity="0.6"/>
+    `).join('')}
+    <line x1="0" y1="55" x2="300" y2="55" stroke="#2a2a2a" stroke-width="0.5"/>
+  </svg>`,
+];
+
+function makeCardArt(idx) {
+  const div = document.createElement('div');
+  div.className = 'report-card-art';
+  div.innerHTML = CARD_ARTS[idx % CARD_ARTS.length];
+  return div;
+}
+
+function renderReport(data) {
+  showOnly(reportState);
+  $('reportName').textContent = formData.name || '분석 대상';
+  $('reportMeta').textContent = `ANALYSIS COMPLETE / ${new Date().toLocaleDateString('ko-KR')} / BZR ENGINE v1.0`;
+
+  const container = $('reportSections');
+  container.innerHTML = '';
+
+  const raw = data.report ?? data.result ?? data.output ?? data.content ?? data.text ?? null;
+
+  if (raw === null) {
+    Object.entries(data).forEach(([k,v],i) => {
+      if (typeof v === 'object') v = JSON.stringify(v, null, 2);
+      container.appendChild(makeSection(k, String(v), i));
+    });
+    return;
+  }
+
+  // 줄바꿈 정규화
+  const normalized = String(raw).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.split('\n');
+
+  const sections = [];
+  let currentTitle = null;
+  let currentBody  = [];
+
+  lines.forEach(line => {
+    // ## 로 시작하는 줄 = 새 섹션 제목
+    if (/^[\s\[\-\*\u2022\u00b7]*#{1,6}/.test(line)) {
+      // 이전 섹션 저장
+      if (currentTitle !== null) {
+        sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+      }
+      // ## 기호 제거 후 제목으로 (## 뒤 공백 유무 무관)
+      currentTitle = line.replace(/^[\s\[\-\*\u2022\u00b7]*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
+      currentBody  = [];
+    } else {
+      // 일반 줄 = 현재 섹션 본문에 추가
+      if (currentTitle === null) {
+        // ## 이전에 내용이 있으면 첫 번째 섹션으로
+        currentTitle = '분석 개요';
+      }
+      currentBody.push(line);
+    }
+  });
+
+  // 마지막 섹션 저장
+  if (currentTitle !== null) {
+    sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+  }
+
+  // 섹션이 없으면 전체를 카드 하나로
+  if (sections.length === 0) {
+    container.appendChild(makeSection('분석 리포트', normalized.trim(), 0));
+    return;
+  }
+
+  sections.forEach((sec, i) => {
+    // 제목/본문에서 마크다운 기호만 제거
+    const cleanTitle = sec.title
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/\[(.+?)\]/g, '$1')
+      .trim();
+
+    const cleanBody = sec.body
+      .replace(/\*\*(.+?)\*\*/gs, '$1')
+      .replace(/\*(.+?)\*/gs, '$1')
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+      .replace(/\[(.+?)\]/g, '$1')
+      .replace(/^[\-\*\u2022]\s+/gm, '')
+      .replace(/^\d+\.\s+/gm, '')
+      .trim();
+
+    container.appendChild(makeSection(cleanTitle, cleanBody, i));
+  });
+}
+
+function makeSection(label, body, idx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'report-section';
+  wrap.style.animationDelay = (idx * 0.1) + 's';
+
+  // Card art header
+  wrap.appendChild(makeCardArt(idx));
+
+  // Label row
+  const labelEl = document.createElement('div');
+  labelEl.className = 'report-section-label';
+  labelEl.innerHTML = `${label}<span class="report-section-num">${String(idx+1).padStart(2,'0')}</span>`;
+
+  // Body
+  const bodyEl = document.createElement('p');
+  bodyEl.className = 'report-section-text';
+  bodyEl.textContent = body;
+
+  // No divider — grid handles spacing
+  const divEl = document.createElement('div');
+  divEl.className = 'report-divider';
+
+  wrap.appendChild(labelEl);
+  wrap.appendChild(bodyEl);
+  wrap.appendChild(divEl);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 15. RESET
+// ═══════════════════════════════════════════════════════════════════
+function resetForm() {
+  currentStep = 0;
+  Object.keys(formData).forEach(k => formData[k]='');
+  hideAll();
+  renderStep();
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT — Single Page Form
+// ═══════════════════════════════════════════════════════════════════
+
+// Populate the visible city select (#sp-city)
+(function populateSpCity() {
+  const sel = document.getElementById('sp-city');
+  if (!sel) return;
+  CITIES.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.name; o.textContent = c.label;
+    sel.appendChild(o);
+  });
+})();
+
+// Also populate the hidden legacy #citySelect (JS compat) — already done in section 7 above
+
+// Silence the old renderStep init (hidden form, no-op)
+renderStep();
+
+// ─── NEW: Single-page form submit ───────────────────────────────
+function submitSingleForm() {
+  // Read values from the new visible inputs
+  const nameVal  = (document.getElementById('sp-name')?.value  || '').trim();
+  const birthVal = (document.getElementById('sp-birth')?.value || '').trim();
+  const timeVal  = (document.getElementById('sp-time')?.value  || '').trim();
+  const cityVal  = (document.getElementById('sp-city')?.value  || '').trim();
+
+  // Validation — highlight errors
+  let hasError = false;
+
+  const igName = document.getElementById('ig-name');
+  const igBirth = document.getElementById('ig-birth');
+  const igCity = document.getElementById('ig-city');
+
+  [igName, igBirth, igCity].forEach(el => el && el.classList.remove('error'));
+
+  if (!nameVal)  { igName  && igName.classList.add('error');  hasError = true; }
+  if (!birthVal) { igBirth && igBirth.classList.add('error'); hasError = true; }
+  if (!cityVal)  { igCity  && igCity.classList.add('error');  hasError = true; }
+
+  if (hasError) {
+    // Scroll to the first errored field
+    const firstErr = document.querySelector('.input-group.error');
+    if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  // Map to formData (used by buildPayload / renderReport)
+  formData.name  = nameVal;
+  formData.birth = birthVal;
+  formData.time  = timeVal;
+  formData.city  = cityVal;
+
+  const city = CITIES.find(c => c.name === cityVal);
+  formData.lat = city ? city.lat : '';
+  formData.lng = city ? city.lng : '';
+
+  // Hide the input grid, show states via existing submitToAPI
+  const grid = document.getElementById('singlePageForm');
+  if (grid) grid.style.display = 'none';
+  const submitRow = document.querySelector('.form-submit-row');
+  if (submitRow) submitRow.style.display = 'none';
+  const header = document.querySelector('.form-section-title');
+  if (header) header.closest('h2') && (header.style.display = 'none');
+
+  submitToAPI();
+}
+
+// Override resetForm to also restore the single-page form
+const _origResetForm = resetForm;
+function resetForm() {
+  // Restore single-page grid
+  const grid = document.getElementById('singlePageForm');
+  if (grid) { grid.style.display = ''; }
+  const submitRow = document.querySelector('.form-submit-row');
+  if (submitRow) { submitRow.style.display = ''; }
+  // Clear error states
+  document.querySelectorAll('.input-group.error').forEach(el => el.classList.remove('error'));
+  // Clear values
+  ['sp-name','sp-birth','sp-time'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const spCity = document.getElementById('sp-city');
+  if (spCity) spCity.value = '';
+  // Reset formData
+  Object.keys(formData).forEach(k => formData[k]='');
+  // Hide all states
+  [loadingState, reportState, errorState].forEach(el => {
+    el.classList.remove('active'); el.style.display = '';
+  });
+  document.getElementById('input-flow').scrollIntoView({behavior:'smooth'});
+}
+</script>
+
+<!-- Firebase 세션 체크 & 로그아웃 (module) -->
+<script type="module">
+import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut }
+                                   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",
+  authDomain:        "bzr-proj.firebaseapp.com",
+  projectId:         "bzr-proj",
+  storageBucket:     "bzr-proj.firebasestorage.app",
+  messagingSenderId: "130300251259",
+  appId:             "1:130300251259:web:0573bafb670f33bbfce6de",
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// ── 세션 감지: 비로그인이면 로그인 페이지로 ──────────────────────────
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.replace('./index.html');
+    return;
+  }
+  // 유저명 표시
+  const nameEl = document.getElementById('nav-username');
+  if (nameEl) nameEl.textContent = user.displayName || user.email || '';
+});
+
+// ── 로그아웃 버튼 ──────────────────────────────────────────────────
+document.getElementById('navLogoutBtn').addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+  } catch(e) {
+    console.error('signOut error:', e);
+  } finally {
+    localStorage.clear();
+    window.location.replace('./index.html');
+  }
+});
+</script>
+
+</body>
+</html>
