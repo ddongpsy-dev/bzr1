@@ -453,7 +453,7 @@ main {
 .btn-close-modal:hover { color: var(--white); border-color: var(--mute-2); }
 </style>
 </head>
-<body>
+<body style="visibility:hidden">
 
 <!-- NAV -->
 <nav>
@@ -732,6 +732,7 @@ function openModal(report) {
 
   if (body) {
     body.innerHTML = '';
+    body.scrollTop = 0;  // 스크롤 초기화
     const content  = (report.full_content || '').trim();
 
     if (!content) {
@@ -790,18 +791,14 @@ function openModal(report) {
 
   document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
-  // 스크롤 초기화 (열 때마다)
-  const body = document.getElementById('modalBody');
-  if (body) body.scrollTop = 0;
 }
 window.openModal = openModal;
 
 function closeModal() {
   document.getElementById('modalBackdrop').classList.remove('open');
   document.body.style.overflow = '';
-  // 스크롤 초기화
-  const body = document.getElementById('modalBody');
-  if (body) body.scrollTop = 0;
+  const modalBodyEl = document.getElementById('modalBody');
+  if (modalBodyEl) modalBodyEl.scrollTop = 0;
 }
 // ★ onclick="closeModal()" 에서 접근할 수 있도록 전역 노출
 window.closeModal = closeModal;
