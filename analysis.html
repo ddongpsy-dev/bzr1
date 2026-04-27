@@ -1739,6 +1739,7 @@ function buildPayload() {
   return {
     action:    'create_report',
     bzr_uid:   localStorage.getItem('bzr_uid') || '',
+    name:      formData.name  || '',
     year:      parts[0]  || '',
     month:     parts[1]  || '',
     date:      parts[2]  || '',
