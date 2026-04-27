@@ -279,6 +279,11 @@ consentCheck.addEventListener('change', () => {
 btnLogin.addEventListener('click', async () => {
   if (btnLogin.disabled) return;
   hideError();
+
+  // ★ 클릭 직전 체크박스 상태를 확정해서 localStorage에 저장
+  const isConsented = consentCheck.checked;
+  localStorage.setItem('bzr_marketing', isConsented ? 'true' : 'false');
+
   btnLogin.disabled  = true;
   btnTxt.textContent = '처리 중...';
 
