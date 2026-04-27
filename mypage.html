@@ -668,11 +668,11 @@ function renderList(reports) {
   reportList.innerHTML    = '';
 
   reports.forEach((report, idx) => {
-    // 필드명은 Make.com 응답에 맞게 조정 (title / date / content / report_text)
-    const title   = report.title       || report.name        || `리포트 ${idx + 1}`;
-    const date    = report.date        || report.created_at  || '—';
-    const content = report.content     || report.report_text || report.report || '';
-    const tag     = report.type        || 'NATAL';
+    // DB 필드명 직접 매핑
+    const title   = report.output_summary || `리포트 ${idx + 1}`;
+    const date    = report.created_at     || '—';
+    const content = report.full_content   || '';
+    const tag     = report.report_id      ? `#${report.report_id}` : 'NATAL';
 
     const item = document.createElement('div');
     item.className = 'report-item';
@@ -690,7 +690,7 @@ function renderList(reports) {
         <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
-    item.addEventListener('click', () => openModal(title, date, content));
+    item.addEventListener('click', () => openModal(report));
     reportList.appendChild(item);
   });
 
@@ -715,63 +715,79 @@ function escHtml(str) {
 }
 
 // ── 모달 열기 ──────────────────────────────────────────────────────
-window.openModal = function(title, date, content) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalDate').textContent  = formatDate(date);
+// report 객체 전체를 받아 output_summary → 제목, full_content → 본문으로 직접 사용
+window.openModal = function(report) {
+  const titleEl = document.getElementById('modalTitle');
+  const dateEl  = document.getElementById('modalDate');
+  const body    = document.getElementById('modalBody');
 
-  // 리포트 본문을 섹션으로 파싱 (analysis.html 동일 로직)
-  const body = document.getElementById('modalBody');
-  body.innerHTML = '';
+  // 1. 제목: output_summary
+  if (titleEl) titleEl.textContent = report.output_summary || '분석 리포트';
 
-  const rawStr = String(content).trim();
+  // 2. 날짜: created_at
+  if (dateEl)  dateEl.textContent  = formatDate(report.created_at || '—');
 
-  if (!rawStr) {
-    body.innerHTML = '<p style="color:var(--mute-2);font-size:13px;padding:20px 0">본문 내용이 없습니다.</p>';
-  } else {
-    const lines    = rawStr.replace(/\r\n/g, '\n').split('\n');
-    const sections = [];
-    let curTitle   = null;
-    let curBody    = [];
+  // 3. 본문: full_content → ## 헤더 기준 섹션 분리 후 렌더링
+  if (body) {
+    body.innerHTML = '';
 
-    lines.forEach(line => {
-      if (/^\s*#{1,6}/.test(line)) {
-        if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
-        curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
-        curBody  = [];
-      } else {
-        if (curTitle === null) curTitle = title;
-        curBody.push(line);
+    const content = (report.full_content || '').trim();
+
+    if (!content) {
+      const empty = document.createElement('p');
+      empty.style.cssText = 'color:var(--mute-2);font-size:13px;padding:20px 0';
+      empty.textContent   = '본문 내용이 없습니다.';
+      body.appendChild(empty);
+    } else {
+      // ## 헤더 기준 섹션 분리 (analysis.html 동일 로직)
+      const lines    = content.replace(/\r\n/g, '\n').split('\n');
+      const sections = [];
+      let curTitle   = null;
+      let curBody    = [];
+
+      lines.forEach(line => {
+        if (/^\s*#{1,6}/.test(line)) {
+          if (curTitle !== null) {
+            sections.push({ title: curTitle, body: curBody.join('\n').trim() });
+          }
+          curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
+          curBody  = [];
+        } else {
+          if (curTitle === null) curTitle = report.output_summary || '분석 리포트';
+          curBody.push(line);
+        }
+      });
+      if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
+
+      // 섹션이 없으면 전체를 하나의 본문으로
+      if (sections.length === 0) {
+        sections.push({ title: report.output_summary || '분석 리포트', body: content });
       }
-    });
-    if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
 
-    if (sections.length === 0) {
-      sections.push({ title: title, body: rawStr });
+      sections.forEach((sec, i) => {
+        const cleanTitle = sec.title
+          .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+        const cleanBody = sec.body
+          .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
+          .replace(/^[\-\*\u2022]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
+
+        const div = document.createElement('div');
+        div.className = 'modal-section';
+        div.style.animationDelay = (i * 0.08) + 's';
+
+        const labelEl = document.createElement('p');
+        labelEl.className   = 'modal-section-label';
+        labelEl.textContent = cleanTitle;
+
+        const textEl = document.createElement('p');
+        textEl.className   = 'modal-section-text';
+        textEl.textContent = cleanBody;
+
+        div.appendChild(labelEl);
+        if (cleanBody) div.appendChild(textEl);
+        body.appendChild(div);
+      });
     }
-
-    sections.forEach((sec, i) => {
-      const cleanTitle = sec.title
-        .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
-      const cleanBody  = sec.body
-        .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
-        .replace(/^[\-\*\u2022]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
-
-      const div = document.createElement('div');
-      div.className = 'modal-section';
-      div.style.animationDelay = (i * 0.08) + 's';
-
-      const labelEl = document.createElement('p');
-      labelEl.className = 'modal-section-label';
-      labelEl.textContent = cleanTitle;
-
-      const textEl = document.createElement('p');
-      textEl.className = 'modal-section-text';
-      textEl.textContent = cleanBody;
-
-      div.appendChild(labelEl);
-      if (cleanBody) div.appendChild(textEl);
-      body.appendChild(div);
-    });
   }
 
   document.getElementById('modalBackdrop').classList.add('open');
