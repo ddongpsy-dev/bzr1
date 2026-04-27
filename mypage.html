@@ -790,12 +790,21 @@ function openModal(report) {
 
   document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
+  // 스크롤 초기화 (열 때마다)
+  const body = document.getElementById('modalBody');
+  if (body) body.scrollTop = 0;
 }
+window.openModal = openModal;
 
 function closeModal() {
   document.getElementById('modalBackdrop').classList.remove('open');
   document.body.style.overflow = '';
+  // 스크롤 초기화
+  const body = document.getElementById('modalBody');
+  if (body) body.scrollTop = 0;
 }
+// ★ onclick="closeModal()" 에서 접근할 수 있도록 전역 노출
+window.closeModal = closeModal;
 
 document.getElementById('modalBackdrop').addEventListener('click', e => {
   if (e.target === document.getElementById('modalBackdrop')) closeModal();
