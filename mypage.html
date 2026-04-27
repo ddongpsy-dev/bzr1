@@ -735,7 +735,6 @@ function openModal(report) {
 
   if (body) {
     body.innerHTML = '';
-    body.scrollTop = 0;  // 스크롤 초기화
     const content  = (report.full_content || '').trim();
 
     if (!content) {
@@ -794,6 +793,11 @@ function openModal(report) {
 
   document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
+  // 콘텐츠 렌더 + 모달 오픈 완료 후 스크롤 맨위로
+  requestAnimationFrame(() => {
+    const b = document.getElementById('modalBody');
+    if (b) b.scrollTop = 0;
+  });
 }
 window.openModal = openModal;
 
