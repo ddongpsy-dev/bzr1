@@ -313,10 +313,17 @@ async function sendDataToWebhook(user) {
 
   console.log('[BZR] ← Webhook response:', data);
 
-  // 서버 확정 bzr_uid 덮어씌움
-  if (data.bzr_uid)            localStorage.setItem('bzr_uid', data.bzr_uid);
+  // 서버 확정 bzr_uid 저장
+  if (data.bzr_uid) {
+    localStorage.setItem('bzr_uid', data.bzr_uid);
+    console.log('[BZR] bzr_uid saved:', data.bzr_uid);
+  } else {
+    // ★ 로그인 웹훅이 bzr_uid 를 안 돌려줬을 경우 대비
+    // google_uid 를 임시 식별자로 저장 (Make.com 에서 bzr_uid 반환 설정 필요)
+    console.warn('[BZR] bzr_uid not in response — check Make.com Respond to Webhook module');
+  }
   if (data.current_credit !== undefined)
-                               localStorage.setItem('bzr_credit', String(data.current_credit));
+    localStorage.setItem('bzr_credit', String(data.current_credit));
 }
 
 // ── 로그인 버튼 클릭 여부 플래그
