@@ -933,11 +933,38 @@ footer {
 @media (max-width: 600px) {
   .nav-links a { display: none; }
   .nav-links a:last-child { display: flex; }
-  .form-main { padding: 40px 20px; }
+
+  /* 폼 영역 */
+  .form-main { padding: 32px 12px; }
   .input-grid { gap: 1px; }
-  .input-group { padding: 20px 16px 24px; }
+  .input-group { padding: 16px 12px 20px; }
   .form-submit-row { flex-direction: column; align-items: flex-start; }
   .btn-run { width: 100%; justify-content: center; }
+  .form-section-title { font-size: 20px; }
+
+  /* 리포트 결과 카드 */
+  #reportSections { gap: 1px; }
+  .report-section-label { padding: 20px 12px 12px; font-size: 17px; }
+  .report-section:last-of-type .report-section-label { font-size: 20px; }
+  .report-section-text { padding: 4px 12px 20px; font-size: 14px; }
+  .report-card-art { padding: 10px 12px; }
+  .report-topbar { padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .report-name { font-size: 24px; }
+  .report-title-row { margin-bottom: 24px; }
+  .report-restart { margin-top: 32px; }
+
+  /* 히어로 */
+  .hero-left { padding: 80px 16px 60px; }
+  .hero-coords { display: none; }
+
+  /* 로직 섹션 */
+  .logic-header { padding: 48px 16px 0; }
+  .logic-card { padding: 32px 16px; }
+  .logic-formula-row { padding: 20px 16px; }
+
+  /* 푸터 */
+  .footer-top { padding: 32px 16px; }
+  .footer-bottom { padding: 14px 16px; }
 }
 </style>
 </head>
