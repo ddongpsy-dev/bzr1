@@ -1737,6 +1737,7 @@ function buildPayload() {
   const parts = (formData.birth||'').split('-');
   const tParts= (formData.time ||'00:00').split(':');
   return {
+    action:    'create_report',
     bzr_uid:   localStorage.getItem('bzr_uid') || '',
     year:      parts[0]  || '',
     month:     parts[1]  || '',
