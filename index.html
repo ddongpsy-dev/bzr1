@@ -255,10 +255,74 @@ function showError(msg) {
 }
 function hideError() { errorMsg.classList.remove('show'); }
 
+// ── BZR UID 생성 / 조회 ─────────────────────────────────────────────
+function getOrCreateBzrUid() {
+  let uid = localStorage.getItem('bzr_uid');
+  if (!uid) {
+    const now   = new Date();
+    const yy    = String(now.getFullYear()).slice(2);
+    const mm    = String(now.getMonth() + 1).padStart(2, '0');
+    const dd    = String(now.getDate()).padStart(2, '0');
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const rand  = Array.from({length:4},
+      () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    uid = `BZR${yy}${mm}${dd}_${rand}`;
+    localStorage.setItem('bzr_uid', uid);
+  }
+  return uid;
+}
+
+// ── 웹훅 전송 (200 OK 확인 후 리다이렉트) ──────────────────────────────
+const LOGIN_WEBHOOK = 'https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae';
+
+async function sendDataToWebhook(user) {
+  // ★ 원칙3: payload 조립 직전, DOM에서 실시간으로 체크박스 상태를 읽음
+  const consentEl       = document.getElementById('consentCheck');
+  const marketingConsent = consentEl ? consentEl.checked : false;
+
+  // localStorage에도 최종 확정값을 덮어씌움 (analysis.html에서 참조하는 경우 대비)
+  localStorage.setItem('bzr_marketing', marketingConsent ? 'true' : 'false');
+
+  const payload = {
+    bzr_uid:           getOrCreateBzrUid(),
+    google_uid:        user.uid,
+    email:             user.email,
+    display_name:      user.displayName,
+    marketing_consent: marketingConsent,
+  };
+
+  console.log('[BZR] → Webhook payload:', payload);
+
+  const res = await fetch(LOGIN_WEBHOOK, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error(`Webhook HTTP ${res.status}`);
+
+  // 응답 파싱
+  const ct = res.headers.get('content-type') || '';
+  let data = {};
+  if (ct.includes('application/json')) {
+    data = await res.json();
+  } else {
+    const text = await res.text();
+    try { data = JSON.parse(text); } catch { data = {}; }
+  }
+
+  console.log('[BZR] ← Webhook response:', data);
+
+  // 서버 확정 bzr_uid 덮어씌움
+  if (data.bzr_uid)            localStorage.setItem('bzr_uid', data.bzr_uid);
+  if (data.current_credit !== undefined)
+                               localStorage.setItem('bzr_credit', String(data.current_credit));
+}
+
 // ── 1. 세션 체크: 이미 로그인돼 있으면 바로 분석 페이지로 ────────────
+// (재로그인 없이 탭을 열었을 때만 — 웹훅은 여기서 보내지 않음)
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // 로그인 상태 → 분석 페이지로 이동
     window.location.replace('./analysis.html');
     return;
   }
@@ -271,36 +335,44 @@ onAuthStateChanged(auth, (user) => {
 consentCheck.addEventListener('change', () => {
   btnLogin.disabled = !consentCheck.checked;
   consentLabel.classList.toggle('checked', consentCheck.checked);
-  localStorage.setItem('bzr_marketing', consentCheck.checked ? 'true' : 'false');
   hideError();
 });
 
-// ── 3. 구글 로그인 ────────────────────────────────────────────────────
+// ── 3. 구글 로그인 — 웹훅 전송 완료 후 리다이렉트 ─────────────────────
 btnLogin.addEventListener('click', async () => {
   if (btnLogin.disabled) return;
   hideError();
-
-  // ★ 클릭 직전 체크박스 상태를 확정해서 localStorage에 저장
-  const isConsented = consentCheck.checked;
-  localStorage.setItem('bzr_marketing', isConsented ? 'true' : 'false');
-
   btnLogin.disabled  = true;
   btnTxt.textContent = '처리 중...';
 
   try {
-    await signInWithPopup(auth, provider);
-    // 로그인 성공 → onAuthStateChanged 가 감지해서 analysis.html 로 이동
+    // ★ 원칙1: signInWithPopup await 직후 웹훅 즉시 호출
+    const result = await signInWithPopup(auth, provider);
+    const user   = result.user;
+
+    btnTxt.textContent = '데이터 전송 중...';
+
+    // ★ 원칙2: 웹훅 200 OK 응답을 기다린 후 리다이렉트
+    await sendDataToWebhook(user);
+
+    // 전송 성공 → 이동
+    window.location.replace('./analysis.html');
+
   } catch (err) {
-    console.error('[BZR] Login error:', err);
+    console.error('[BZR] Login/webhook error:', err);
     btnLogin.disabled  = false;
     btnTxt.textContent = 'Google로 시작하기';
 
     if (err.code === 'auth/popup-closed-by-user') {
       showError('로그인 창이 닫혔습니다. 다시 시도해주세요.');
     } else if (err.code === 'auth/popup-blocked') {
-      showError('팝업이 차단됐습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+      showError('팝업이 차단됐습니다. 브라우저 팝업 허용 후 재시도해주세요.');
+    } else if (err.message && err.message.startsWith('Webhook')) {
+      // 웹훅 실패 시: 데이터 전송 오류지만 로그인은 됐으므로 일단 이동
+      console.warn('[BZR] Webhook failed, proceeding to analysis.html anyway');
+      window.location.replace('./analysis.html');
     } else {
-      showError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      showError('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   }
 });

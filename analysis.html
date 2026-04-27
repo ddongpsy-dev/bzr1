@@ -2159,19 +2159,15 @@ async function sendLoginWebhook(user) {
   // 이미 이번 세션에서 전송했으면 스킵 (중복 방지)
   if (sessionStorage.getItem('bzr_webhook_sent') === 'true') return;
 
-  // ★ fetch 직전에 localStorage를 다시 읽어서 최신 동의 상태 확정
-  const marketingConsent = localStorage.getItem('bzr_marketing') === 'true';
-
   const payload = {
     bzr_uid:           getOrCreateBzrUid(),
     google_uid:        user.uid,
     email:             user.email,
     display_name:      user.displayName,
-    marketing_consent: marketingConsent,   // 오타 없음: marketing_consent (snake_case)
+    marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
   };
 
   console.log('[BZR] → Login webhook payload:', payload);
-  console.log('[BZR] marketing_consent value:', marketingConsent, '/ localStorage raw:', localStorage.getItem('bzr_marketing'));
 
   try {
     const res = await fetch(LOGIN_WEBHOOK, {
