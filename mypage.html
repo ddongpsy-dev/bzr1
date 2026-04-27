@@ -637,6 +637,9 @@ async function loadReports(googleUid) {
       }
     }
 
+    // null 값으로 채워진 빈 객체 제거 (Make.com이 데이터 없을 때 null로 채운 객체를 보냄)
+    reports = reports.filter(r => r.output_summary || r.full_content || r.created_at);
+
     console.log('[BZR] ← Reports:', reports.length, '건');
 
     if (reports.length === 0) { showState('empty'); return; }
