@@ -151,7 +151,7 @@ nav {
   background: var(--cyan); animation: blink 2s infinite;
 }
 
-.nav-links { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-links a {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
   color: #aaaaaa; text-decoration: none; text-transform: uppercase;
@@ -973,7 +973,10 @@ footer {
 }
 
 /* ── NAV 유저 영역 ── */
-.nav-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-right {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.nav-user { display: flex; align-items: center; gap: 10px; }
 .nav-username {
   font-family: var(--mono); font-size: 10px;
   letter-spacing: 0.1em; color: var(--mute-1);
@@ -991,7 +994,7 @@ footer {
 @media (max-width: 600px) { .nav-username { display: none; } }
 </style>
 </head>
-<body>
+<body style="visibility:hidden">
 
 <!-- ══════════════════════════════════════════════════
      NAV
@@ -1009,13 +1012,15 @@ footer {
     <div class="nav-status">SYSTEM ONLINE</div>
   </div>
 
-  <div class="nav-links">
-    <a href="#input-flow">분석 시작</a>
-    <a href="#logic">시스템</a>
-  </div>
-  <div class="nav-user">
-    <span id="nav-username" class="nav-username"></span>
-    <button class="nav-logout-btn" id="navLogoutBtn">로그아웃</button>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="#input-flow">분석 시작</a>
+      <a href="#logic">시스템</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username" class="nav-username"></span>
+      <button class="nav-logout-btn" id="navLogoutBtn">로그아웃</button>
+    </div>
   </div>
 </nav>
 
@@ -2137,6 +2142,8 @@ onAuthStateChanged(auth, (user) => {
     window.location.replace('./index.html');
     return;
   }
+  // 세션 확인 완료 → 페이지 표시
+  document.body.style.visibility = 'visible';
   // 유저명 표시
   const nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
