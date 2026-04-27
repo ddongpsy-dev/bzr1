@@ -1737,6 +1737,7 @@ function buildPayload() {
   const parts = (formData.birth||'').split('-');
   const tParts= (formData.time ||'00:00').split(':');
   return {
+    bzr_uid:   localStorage.getItem('bzr_uid') || '',
     year:      parts[0]  || '',
     month:     parts[1]  || '',
     date:      parts[2]  || '',
@@ -2120,9 +2121,9 @@ function resetForm() {
 
 <!-- Firebase 세션 체크 & 로그아웃 (module) -->
 <script type="module">
-import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut }
-                                   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",
@@ -2136,74 +2137,9 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// ── BZR UID 생성 ──────────────────────────────────────────────────
-function getOrCreateBzrUid() {
-  let uid = localStorage.getItem('bzr_uid');
-  if (!uid) {
-    const now   = new Date();
-    const yy    = String(now.getFullYear()).slice(2);
-    const mm    = String(now.getMonth() + 1).padStart(2, '0');
-    const dd    = String(now.getDate()).padStart(2, '0');
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const rand  = Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
-    uid = `BZR${yy}${mm}${dd}_${rand}`;
-    localStorage.setItem('bzr_uid', uid);
-  }
-  return uid;
-}
-
-// ── 웹훅 전송 ─────────────────────────────────────────────────────
-const LOGIN_WEBHOOK = 'https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae';
-
-async function sendLoginWebhook(user) {
-  // 이미 이번 세션에서 전송했으면 스킵 (중복 방지)
-  if (sessionStorage.getItem('bzr_webhook_sent') === 'true') return;
-
-  const payload = {
-    bzr_uid:           getOrCreateBzrUid(),
-    google_uid:        user.uid,
-    email:             user.email,
-    display_name:      user.displayName,
-    marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
-  };
-
-  console.log('[BZR] → Login webhook payload:', payload);
-
-  try {
-    const res = await fetch(LOGIN_WEBHOOK, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const ct   = res.headers.get('content-type') || '';
-    let data   = {};
-    if (ct.includes('application/json')) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      try { data = JSON.parse(text); } catch { data = {}; }
-    }
-
-    console.log('[BZR] ← Login webhook response:', data);
-
-    // 서버에서 확정된 bzr_uid 로 덮어씌움
-    if (data.bzr_uid) localStorage.setItem('bzr_uid', data.bzr_uid);
-    // 크레딧 저장
-    if (data.current_credit !== undefined) {
-      localStorage.setItem('bzr_credit', String(data.current_credit));
-    }
-
-    sessionStorage.setItem('bzr_webhook_sent', 'true');
-  } catch (err) {
-    console.error('[BZR] Login webhook error:', err);
-  }
-}
-
-// ── 세션 감지: 비로그인이면 로그인 페이지로 ──────────────────────────
-onAuthStateChanged(auth, async (user) => {
+// ── 세션 감지: 비로그인이면 index.html로 ─────────────────────────────
+// 웹훅은 index.html에서 이미 완료 후 이동했으므로 여기선 세션 체크만 담당
+onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.replace('./index.html');
     return;
@@ -2213,18 +2149,19 @@ onAuthStateChanged(auth, async (user) => {
   // 유저명 표시
   const nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
-  // 웹훅 전송 (구글 정보 + bzr_uid + 마케팅 동의)
-  await sendLoginWebhook(user);
 });
 
-// ── 로그아웃 버튼 ──────────────────────────────────────────────────
+// ── 로그아웃 ─────────────────────────────────────────────────────────
+// ★ 원칙4: signOut 완료 → localStorage + sessionStorage 완전 파기 → 이동
 document.getElementById('navLogoutBtn').addEventListener('click', async () => {
   try {
     await signOut(auth);
   } catch(e) {
-    console.error('signOut error:', e);
+    console.error('[BZR] signOut error:', e);
   } finally {
+    // 세션 찌꺼기 완전 제거 (bzr_webhook_sent 포함)
     localStorage.clear();
+    sessionStorage.clear();
     window.location.replace('./index.html');
   }
 });
