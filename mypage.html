@@ -568,7 +568,7 @@ const auth = getAuth(app);
 
 // ── 세션 감지 ──────────────────────────────────────────────────────
 // onAuthStateChanged 에서 user 객체를 받아 loadReports 에 직접 전달
-// localStorage 의존 없이 Firebase 인증 정보만으로 동작
+// localStorage 의 bzr_uid 를 사용 (index.html 웹훅 응답에서 저장됨)
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.replace('./index.html');
@@ -583,7 +583,7 @@ onAuthStateChanged(auth, (user) => {
   const bzrUid = localStorage.getItem('bzr_uid') || user.uid;
   document.getElementById('displayUid').textContent = bzrUid;
   // 리포트 로드 — user 객체 전달
-  window.loadReports(user);
+  window.loadReports();
 });
 
 // ── 로그아웃 ──────────────────────────────────────────────────────
@@ -617,14 +617,9 @@ function showState(name) {
 }
 
 // ── 리포트 목록 로드 ──────────────────────────────────────────────
-// user: Firebase Auth user 객체 (onAuthStateChanged 에서 전달)
-// bzr_uid 없어도 google_uid 로 뒷단에서 유저 식별 가능
-window.loadReports = async function(user) {
-  const bzrUid    = localStorage.getItem('bzr_uid') || '';
-  const googleUid = user ? user.uid : '';
-
-  // 둘 다 없으면 로그인 안 된 상태
-  if (!bzrUid && !googleUid) { showState('error'); return; }
+window.loadReports = async function() {
+  const bzrUid = localStorage.getItem('bzr_uid');
+  if (!bzrUid) { showState('error'); return; }
 
   showState('loading');
 
@@ -635,9 +630,8 @@ window.loadReports = async function(user) {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          action:     'fetch_reports',
-          bzr_uid:    bzrUid,
-          google_uid: googleUid,
+          action:  'fetch_reports',
+          bzr_uid: bzrUid,
         }),
       }
     );

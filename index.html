@@ -324,12 +324,21 @@ async function sendDataToWebhook(user) {
 // 웹훅 실행 전에 페이지를 가져가는 것을 막기 위한 장치
 let loginInProgress = false;
 
-// ── 1. 세션 체크: 이미 로그인된 세션으로 탭을 열었을 때만 이동 ─────────
-onAuthStateChanged(auth, (user) => {
+// ── 1. 세션 체크 ────────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    // loginInProgress = true 이면 버튼 클릭 흐름이 제어 중이므로 무시
+    // loginInProgress = true 이면 버튼 클릭 흐름이 이미 제어 중 → 무시
     if (loginInProgress) return;
-    // 기존 세션(탭 열기·새로고침) → 웹훅 없이 바로 이동
+
+    // 기존 세션(탭 열기·새로고침·재방문)으로 로그인된 경우
+    // bzr_uid 가 localStorage 에 없으면 웹훅 호출해서 복원 후 이동
+    if (!localStorage.getItem('bzr_uid')) {
+      try {
+        await sendDataToWebhook(user);
+      } catch(e) {
+        console.error('[BZR] Session webhook error:', e);
+      }
+    }
     window.location.replace('./analysis.html');
     return;
   }
