@@ -567,6 +567,8 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // ── 세션 감지 ──────────────────────────────────────────────────────
+let reportsLoaded = false; // 중복 호출 방지
+
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.replace('./index.html');
@@ -580,8 +582,23 @@ onAuthStateChanged(auth, (user) => {
   // UID 표시
   const bzrUid = localStorage.getItem('bzr_uid') || '—';
   document.getElementById('displayUid').textContent = bzrUid;
-  // 리포트 로드
-  window.loadReports();
+  // 리포트 로드 (onAuthStateChanged 경로)
+  if (!reportsLoaded) {
+    reportsLoaded = true;
+    window.loadReports();
+  }
+});
+
+// ── DOMContentLoaded 에서도 직접 호출 ────────────────────────────────
+// Firebase onAuthStateChanged 가 늦게 오거나 재발화 안 하는 경우 대비
+// bzr_uid 가 localStorage 에 있으면 세션이 살아있는 것으로 보고 즉시 로드
+document.addEventListener('DOMContentLoaded', () => {
+  const bzrUid = localStorage.getItem('bzr_uid');
+  if (bzrUid && !reportsLoaded) {
+    reportsLoaded = true;
+    document.getElementById('displayUid').textContent = bzrUid;
+    window.loadReports();
+  }
 });
 
 // ── 로그아웃 ──────────────────────────────────────────────────────
