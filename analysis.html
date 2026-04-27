@@ -98,8 +98,10 @@ body::after {
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   height: 52px;
-  padding: 0 clamp(20px,5vw,80px);
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(12px,3vw,80px);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 8px;
   background: rgba(0,0,0,0.92);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
@@ -128,7 +130,9 @@ nav {
 
 .nav-center {
   display: flex; align-items: center; gap: 4px;
-  position: absolute; left: 50%; transform: translateX(-50%);
+  /* absolute 제거 — flex 중간 아이템으로 처리 */
+  flex: 1; justify-content: center;
+  overflow: hidden; min-width: 0;
 }
 .nav-tag {
   font-family: var(--mono); font-size: 10px;
@@ -147,7 +151,7 @@ nav {
   background: var(--cyan); animation: blink 2s infinite;
 }
 
-.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .nav-links a {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
   color: #aaaaaa; text-decoration: none; text-transform: uppercase;
@@ -929,6 +933,7 @@ footer {
   .footer-top { grid-template-columns: 1fr; }
   .nav-center { display: none; }
   .input-grid { grid-template-columns: 1fr; }
+  nav { grid-template-columns: auto 1fr; }
 }
 @media (max-width: 600px) {
   .nav-links a { display: none; }
@@ -968,7 +973,7 @@ footer {
 }
 
 /* ── NAV 유저 영역 ── */
-.nav-user { display: flex; align-items: center; gap: 10px; }
+.nav-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .nav-username {
   font-family: var(--mono); font-size: 10px;
   letter-spacing: 0.1em; color: var(--mute-1);
@@ -1007,7 +1012,6 @@ footer {
   <div class="nav-links">
     <a href="#input-flow">분석 시작</a>
     <a href="#logic">시스템</a>
-    <a href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">채널</a>
   </div>
   <div class="nav-user">
     <span id="nav-username" class="nav-username"></span>
@@ -1296,12 +1300,7 @@ footer {
       </p>
     </div>
 
-    <div>
-      <p class="footer-col-title">채널</p>
-      <div class="footer-links">
-        <a class="footer-link" href="https://www.youtube.com/@버프가이" target="_blank" rel="noopener">YouTube</a>
-      </div>
-    </div>
+
   </div>
 
   <div class="footer-bottom">
