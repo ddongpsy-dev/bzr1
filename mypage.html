@@ -544,7 +544,252 @@ main {
   </div>
 </div>
 
-<!-- Firebase -->
+<script>
+'use strict';
+
+// ── DOM ──────────────────────────────────────────────────────────
+const stateLoading = document.getElementById('stateLoading');
+const stateEmpty   = document.getElementById('stateEmpty');
+const stateError   = document.getElementById('stateError');
+const stateList    = document.getElementById('stateList');
+const reportList   = document.getElementById('reportList');
+const reportCount  = document.getElementById('reportCount');
+
+// ── 상태 전환 ─────────────────────────────────────────────────────
+function showState(name) {
+  stateLoading.style.display = name === 'loading' ? 'flex'   : 'none';
+  stateEmpty.style.display   = name === 'empty'   ? 'block'  : 'none';
+  stateError.style.display   = name === 'error'   ? 'block'  : 'none';
+  stateList.style.display    = name === 'list'    ? 'block'  : 'none';
+}
+
+// ── 리포트 목록 로드 ──────────────────────────────────────────────
+window.loadReports = async function() {
+  const bzrUid = localStorage.getItem('bzr_uid');
+  if (!bzrUid) { showState('error'); return; }
+
+  showState('loading');
+
+  try {
+    const res = await fetch(
+      'https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0',
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          action:  'fetch_reports',
+          bzr_uid: bzrUid,
+        }),
+      }
+    );
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // ── 응답 파싱 ─────────────────────────────────────────────────────
+    const rawText = await res.text();
+    console.log('[BZR] ← Raw response:', rawText);
+
+    // Make.com JSON Aggregator 는 응답이 문자열로 한 번 더 감싸지는 경우가 있음
+    // 1차 파싱 후 결과가 string 이면 2차 파싱 시도
+    let data = {};
+    try {
+      const parsed = JSON.parse(rawText);
+      // 1차 파싱 결과가 문자열이면 (이중 직렬화된 경우) 한 번 더 파싱
+      data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+    } catch {
+      console.warn('[BZR] JSON parse failed:', rawText);
+    }
+    console.log('[BZR] ← Parsed:', data);
+
+    // 응답 구조 정규화
+    // Make.com JSON Aggregator → 보통 배열로 옴
+    // Respond to Webhook Body 에 담기면 { "data": [...] } 또는 배열 직접
+    let reports = [];
+    if (Array.isArray(data)) {
+      reports = data;
+    } else if (typeof data === 'object' && data !== null) {
+      // 객체 안에 배열이 있는 키를 자동 탐색
+      const arrKey = Object.keys(data).find(k => Array.isArray(data[k]));
+      if (arrKey) {
+        reports = data[arrKey];
+      } else if (data.full_content || data.output_summary) {
+        // 단일 객체로 온 경우
+        reports = [data];
+      }
+    }
+
+    console.log('[BZR] ← Reports:', reports.length, '건');
+
+    if (reports.length === 0) {
+      showState('empty');
+      return;
+    }
+
+    // created_at 기준 내림차순 정렬 (최신 데이터가 위로)
+    reports.sort((a, b) => {
+      const da = a.created_at ? new Date(a.created_at) : 0;
+      const db = b.created_at ? new Date(b.created_at) : 0;
+      return db - da;
+    });
+
+    renderList(reports);
+
+  } catch(err) {
+    console.error('[BZR] Reports fetch error:', err);
+    document.getElementById('errorText').textContent =
+      `리포트를 불러오는 중 오류가 발생했습니다.\n(${err.message})`;
+    showState('error');
+  }
+};
+
+// ── 목록 렌더링 ────────────────────────────────────────────────────
+function renderList(reports) {
+  reportCount.textContent = reports.length;
+  reportList.innerHTML    = '';
+
+  reports.forEach((report, idx) => {
+    // DB 필드명 직접 매핑
+    const title   = report.output_summary || `리포트 ${idx + 1}`;
+    const date    = report.created_at     || '—';
+    const content = report.full_content   || '';
+    const tag     = report.report_id      ? `#${report.report_id}` : 'NATAL';
+
+    const item = document.createElement('div');
+    item.className = 'report-item';
+    item.style.animationDelay = (idx * 0.06) + 's';
+    item.innerHTML = `
+      <span class="report-item-num">${String(idx + 1).padStart(2, '0')}</span>
+      <div class="report-item-body">
+        <p class="report-item-title">${escHtml(title)}</p>
+        <div class="report-item-meta">
+          <span class="report-item-date">${escHtml(formatDate(date))}</span>
+          <span class="report-item-tag">${escHtml(tag)}</span>
+        </div>
+      </div>
+      <svg class="report-item-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    item.addEventListener('click', () => openModal(report));
+    reportList.appendChild(item);
+  });
+
+  showState('list');
+}
+
+// ── 날짜 포맷 ──────────────────────────────────────────────────────
+function formatDate(raw) {
+  if (!raw || raw === '—') return '—';
+  try {
+    const d = new Date(raw);
+    if (isNaN(d)) return raw;
+    return d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  } catch { return raw; }
+}
+
+// ── XSS 방지 ──────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 모달 열기 ──────────────────────────────────────────────────────
+// report 객체 전체를 받아 output_summary → 제목, full_content → 본문으로 직접 사용
+window.openModal = function(report) {
+  const titleEl = document.getElementById('modalTitle');
+  const dateEl  = document.getElementById('modalDate');
+  const body    = document.getElementById('modalBody');
+
+  // 1. 제목: output_summary
+  if (titleEl) titleEl.textContent = report.output_summary || '분석 리포트';
+
+  // 2. 날짜: created_at
+  if (dateEl)  dateEl.textContent  = formatDate(report.created_at || '—');
+
+  // 3. 본문: full_content → ## 헤더 기준 섹션 분리 후 렌더링
+  if (body) {
+    body.innerHTML = '';
+
+    const content = (report.full_content || '').trim();
+
+    if (!content) {
+      const empty = document.createElement('p');
+      empty.style.cssText = 'color:var(--mute-2);font-size:13px;padding:20px 0';
+      empty.textContent   = '본문 내용이 없습니다.';
+      body.appendChild(empty);
+    } else {
+      // ## 헤더 기준 섹션 분리 (analysis.html 동일 로직)
+      const lines    = content.replace(/\r\n/g, '\n').split('\n');
+      const sections = [];
+      let curTitle   = null;
+      let curBody    = [];
+
+      lines.forEach(line => {
+        if (/^\s*#{1,6}/.test(line)) {
+          if (curTitle !== null) {
+            sections.push({ title: curTitle, body: curBody.join('\n').trim() });
+          }
+          curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
+          curBody  = [];
+        } else {
+          if (curTitle === null) curTitle = report.output_summary || '분석 리포트';
+          curBody.push(line);
+        }
+      });
+      if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
+
+      // 섹션이 없으면 전체를 하나의 본문으로
+      if (sections.length === 0) {
+        sections.push({ title: report.output_summary || '분석 리포트', body: content });
+      }
+
+      sections.forEach((sec, i) => {
+        const cleanTitle = sec.title
+          .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+        const cleanBody = sec.body
+          .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
+          .replace(/^[\-\*\u2022]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
+
+        const div = document.createElement('div');
+        div.className = 'modal-section';
+        div.style.animationDelay = (i * 0.08) + 's';
+
+        const labelEl = document.createElement('p');
+        labelEl.className   = 'modal-section-label';
+        labelEl.textContent = cleanTitle;
+
+        const textEl = document.createElement('p');
+        textEl.className   = 'modal-section-text';
+        textEl.textContent = cleanBody;
+
+        div.appendChild(labelEl);
+        if (cleanBody) div.appendChild(textEl);
+        body.appendChild(div);
+      });
+    }
+  }
+
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+// ── 모달 닫기 ──────────────────────────────────────────────────────
+window.closeModal = function() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+// 배경 클릭으로 닫기
+document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modalBackdrop')) closeModal();
+});
+
+// ESC 키로 닫기
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+</script><!-- Firebase -->
 <script type="module">
 import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut }
@@ -582,8 +827,17 @@ onAuthStateChanged(auth, (user) => {
   // UID 표시 (localStorage 에 있으면 쓰고, 없으면 google_uid 표시)
   const bzrUid = localStorage.getItem('bzr_uid') || user.uid;
   document.getElementById('displayUid').textContent = bzrUid;
-  // 리포트 로드 — user 객체 전달
-  window.loadReports();
+  // 리포트 로드 — window.loadReports 가 준비될 때까지 대기 후 호출
+  function tryLoadReports(retries) {
+    if (typeof window.loadReports === 'function') {
+      window.loadReports();
+    } else if (retries > 0) {
+      setTimeout(() => tryLoadReports(retries - 1), 100);
+    } else {
+      console.error('[BZR] loadReports not ready');
+    }
+  }
+  tryLoadReports(20); // 최대 2초(100ms × 20회) 대기
 });
 
 // ── 로그아웃 ──────────────────────────────────────────────────────
