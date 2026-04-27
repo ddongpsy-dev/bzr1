@@ -591,10 +591,10 @@ function showState(name) {
 // ═══════════════════════════════════════════════════════════════════
 // 리포트 로드
 // ═══════════════════════════════════════════════════════════════════
-async function loadReports() {
-  const bzrUid    = localStorage.getItem('bzr_uid')        || '';
-  const googleUid = localStorage.getItem('bzr_google_uid') || '';
-
+async function loadReports(googleUid) {
+  const bzrUid = localStorage.getItem('bzr_uid') || '';
+  // googleUid: onAuthStateChanged 에서 Firebase user.uid 직접 전달
+  // localStorage 의존 없이 항상 최신 인증 정보 사용
   if (!bzrUid && !googleUid) { showState('error'); return; }
 
   showState('loading');
@@ -817,13 +817,11 @@ onAuthStateChanged(auth, (user) => {
   // 유저명
   const nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
-  // google_uid 저장 (폴백용)
-  localStorage.setItem('bzr_google_uid', user.uid);
   // UID 표시
-  const bzrUid = localStorage.getItem('bzr_uid') || user.uid;
-  document.getElementById('displayUid').textContent = bzrUid;
-  // 리포트 로드 — 같은 스크립트 안이라 즉시 호출 가능
-  loadReports();
+  const bzrUid = localStorage.getItem('bzr_uid') || '';
+  document.getElementById('displayUid').textContent = bzrUid || user.uid;
+  // ★ Firebase user.uid 를 직접 파라미터로 전달 — localStorage 의존 없음
+  loadReports(user.uid);
 });
 
 // 로그아웃
