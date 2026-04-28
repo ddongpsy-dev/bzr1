@@ -669,7 +669,14 @@ async function loadReports(googleUid) {
     });
 
     if (reports.length === 0) { showState('empty'); return; }
-    renderList(reports);
+    // 목록에서는 full_content 제거 — 상세 조회 시 별도 웹훅으로 가져옴
+    const listData = reports.map(r => ({
+      report_id:      r.report_id,
+      output_summary: r.output_summary,
+      created_at:     r.created_at,
+      bzr_uid:        r.bzr_uid,
+    }));
+    renderList(listData);
 
   } catch(err) {
     console.error('[BZR] list error:', err);
@@ -845,6 +852,7 @@ document.addEventListener('keydown', function(e) {
 onAuthStateChanged(auth, function(user) {
   if (!user) { window.location.replace('./index.html'); return; }
   document.getElementById('mainContent').style.display = 'block';
+  document.body.style.visibility = 'visible';
   var nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
   var bzrUid = localStorage.getItem('bzr_uid') || '';
