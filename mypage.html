@@ -44,7 +44,7 @@ body {
   overflow-x: hidden;
   cursor: crosshair;
   -webkit-font-smoothing: antialiased;
-  visibility: hidden; /* 세션 확인 후 표시 */
+  /* visibility 제거 - Firebase onAuthStateChanged 로 제어 */
 }
 
 /* 그리드 오버레이 */
@@ -501,7 +501,7 @@ main {
 </nav>
 
 <!-- MAIN -->
-<main>
+<main id="mainContent" style="display:none">
 
   <!-- 페이지 헤더 -->
   <div class="page-header">
@@ -847,7 +847,7 @@ document.addEventListener('keydown', function(e) {
 // ── Firebase 세션 감지 ────────────────────────────────────────────
 onAuthStateChanged(auth, function(user) {
   if (!user) { window.location.replace('./index.html'); return; }
-  document.body.style.visibility = 'visible';
+  document.getElementById('mainContent').style.display = 'block';
   var nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
   var bzrUid = localStorage.getItem('bzr_uid') || '';
