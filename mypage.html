@@ -472,7 +472,7 @@ main {
 }
 </style>
 </head>
-<body style="visibility:hidden">
+<body>
 
 <!-- NAV -->
 <nav>
@@ -891,7 +891,6 @@ document.addEventListener('keydown', function(e) {
 // ── Firebase 세션 감지 ────────────────────────────────────────────
 onAuthStateChanged(auth, function(user) {
   // 세션 확인 즉시 페이지 표시 — loadReports 에러와 무관하게 항상 실행
-  document.body.style.visibility = 'visible';
   document.getElementById('mainContent').style.display = 'block';
   if (!user) { window.location.replace('./index.html'); return; }
   var nameEl = document.getElementById('nav-username');
