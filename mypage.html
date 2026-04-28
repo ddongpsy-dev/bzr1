@@ -451,6 +451,25 @@ main {
   text-transform: uppercase;
 }
 .btn-close-modal:hover { color: var(--white); border-color: var(--mute-2); }
+
+/* 모달 로딩 상태 */
+.modal-loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; padding: 60px 20px;
+}
+.modal-loading-spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.modal-loading-text {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.2em; color: var(--mute-2);
+  animation: blink 1.5s infinite;
+}
 </style>
 </head>
 <body style="visibility:hidden">
@@ -697,7 +716,7 @@ function renderList(reports) {
         <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
-    item.addEventListener('click', () => openModal(report));
+    item.addEventListener('click', () => fetchAndOpenModal(report.report_id, report));
     reportList.appendChild(item);
   });
 
@@ -723,9 +742,66 @@ function escHtml(str) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 모달
+// 2단계: 상세 조회 (report_id 로 full_content 가져오기)
 // ═══════════════════════════════════════════════════════════════════
-function openModal(report) {
+const DETAIL_WEBHOOK = 'https://hook.us2.make.com/1lifeb9shmrw0xzcy58nq757k1af748q';
+const contentCache   = {};  // { report_id: full_content } — 캐시
+
+async function fetchAndOpenModal(reportId, report) {
+  // 모달 먼저 열고 로딩 표시
+  openModalShell(report);
+
+  // 캐시에 있으면 웹훅 재호출 없이 바로 렌더
+  if (contentCache[reportId]) {
+    console.log('[BZR] cache hit:', reportId);
+    renderModalContent(contentCache[reportId], report);
+    return;
+  }
+
+  // 상세 웹훅 호출
+  try {
+    const res = await fetch(DETAIL_WEBHOOK, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:    'fetch_detail',
+        report_id: reportId,
+        bzr_uid:   localStorage.getItem('bzr_uid') || '',
+      }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const rawText = await res.text();
+    let data = {};
+    try {
+      const parsed = JSON.parse(rawText);
+      data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+    } catch { data = {}; }
+
+    const fullContent = data.full_content || data.content || data.report || '';
+
+    // 캐시에 저장
+    contentCache[reportId] = fullContent;
+    console.log('[BZR] cached:', reportId);
+
+    renderModalContent(fullContent, report);
+
+  } catch(err) {
+    console.error('[BZR] Detail fetch error:', err);
+    const body = document.getElementById('modalBody');
+    if (body) {
+      body.innerHTML = '';
+      const el = document.createElement('p');
+      el.style.cssText = 'color:var(--red);font-size:13px;padding:20px 0';
+      el.textContent   = '상세 내용을 불러오는 중 오류가 발생했습니다.';
+      body.appendChild(el);
+    }
+  }
+}
+
+// 모달 열기 (제목/날짜만 먼저, 본문은 로딩 스피너)
+function openModalShell(report) {
   const titleEl = document.getElementById('modalTitle');
   const dateEl  = document.getElementById('modalDate');
   const body    = document.getElementById('modalBody');
@@ -734,70 +810,101 @@ function openModal(report) {
   if (dateEl)  dateEl.textContent  = formatDate(report.created_at || '—');
 
   if (body) {
-    body.innerHTML = '';
-    const content  = (report.full_content || '').trim();
-
-    if (!content) {
-      const el = document.createElement('p');
-      el.style.cssText  = 'color:var(--mute-2);font-size:13px;padding:20px 0';
-      el.textContent    = '본문 내용이 없습니다.';
-      body.appendChild(el);
-    } else {
-      const lines    = content.replace(/\r\n/g, '\n').split('\n');
-      const sections = [];
-      let curTitle   = null;
-      let curBody    = [];
-
-      lines.forEach(line => {
-        if (/^\s*#{1,6}/.test(line)) {
-          if (curTitle !== null)
-            sections.push({ title: curTitle, body: curBody.join('\n').trim() });
-          curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
-          curBody  = [];
-        } else {
-          if (curTitle === null) curTitle = report.output_summary || '분석 리포트';
-          curBody.push(line);
-        }
-      });
-      if (curTitle !== null)
-        sections.push({ title: curTitle, body: curBody.join('\n').trim() });
-
-      if (sections.length === 0)
-        sections.push({ title: report.output_summary || '분석 리포트', body: content });
-
-      sections.forEach((sec, i) => {
-        const cleanTitle = sec.title
-          .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
-        const cleanBody  = sec.body
-          .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
-          .replace(/^[\-\*\u2022]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
-
-        const div = document.createElement('div');
-        div.className = 'modal-section';
-        div.style.animationDelay = (i * 0.08) + 's';
-
-        const labelEl = document.createElement('p');
-        labelEl.className   = 'modal-section-label';
-        labelEl.textContent = cleanTitle;
-
-        const textEl = document.createElement('p');
-        textEl.className   = 'modal-section-text';
-        textEl.textContent = cleanBody;
-
-        div.appendChild(labelEl);
-        if (cleanBody) div.appendChild(textEl);
-        body.appendChild(div);
-      });
-    }
+    body.innerHTML = `
+      <div class="modal-loading">
+        <div class="modal-loading-spinner"></div>
+        <p class="modal-loading-text">데이터 로딩 중...</p>
+      </div>`;
   }
 
   document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
-  // 콘텐츠 렌더 + 모달 오픈 완료 후 스크롤 맨위로
   requestAnimationFrame(() => {
     const b = document.getElementById('modalBody');
     if (b) b.scrollTop = 0;
   });
+}
+
+// full_content 를 받아서 모달 본문 렌더링
+function renderModalContent(content, report) {
+  const body = document.getElementById('modalBody');
+  if (!body) return;
+
+  body.innerHTML = '';
+
+  if (!content || !content.trim()) {
+    const el = document.createElement('p');
+    el.style.cssText = 'color:var(--mute-2);font-size:13px;padding:20px 0';
+    el.textContent   = '본문 내용이 없습니다.';
+    body.appendChild(el);
+    return;
+  }
+
+  const lines    = content.replace(/
+/g, '
+').split('
+');
+  const sections = [];
+  let curTitle   = null;
+  let curBody    = [];
+
+  lines.forEach(line => {
+    if (/^\s*#{1,6}/.test(line)) {
+      if (curTitle !== null)
+        sections.push({ title: curTitle, body: curBody.join('
+').trim() });
+      curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
+      curBody  = [];
+    } else {
+      if (curTitle === null) curTitle = report.output_summary || '분석 리포트';
+      curBody.push(line);
+    }
+  });
+  if (curTitle !== null)
+    sections.push({ title: curTitle, body: curBody.join('
+').trim() });
+
+  if (sections.length === 0)
+    sections.push({ title: report.output_summary || '분석 리포트', body: content });
+
+  sections.forEach((sec, i) => {
+    const cleanTitle = sec.title
+      .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+    const cleanBody  = sec.body
+      .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
+      .replace(/^[\-\*•]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
+
+    const div = document.createElement('div');
+    div.className = 'modal-section';
+    div.style.animationDelay = (i * 0.06) + 's';
+
+    const labelEl = document.createElement('p');
+    labelEl.className   = 'modal-section-label';
+    labelEl.textContent = cleanTitle;
+
+    const textEl = document.createElement('p');
+    textEl.className   = 'modal-section-text';
+    textEl.textContent = cleanBody;
+
+    div.appendChild(labelEl);
+    if (cleanBody) div.appendChild(textEl);
+    body.appendChild(div);
+  });
+
+  requestAnimationFrame(() => { body.scrollTop = 0; });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 모달 (레거시 — 내부적으로 openModalShell 로 위임)
+// ═══════════════════════════════════════════════════════════════════
+function openModal(report) {
+  // report_id 있으면 2단계 조회, 없으면 report.full_content 직접 사용
+  if (report.report_id) {
+    fetchAndOpenModal(report.report_id, report);
+  } else {
+    openModalShell(report);
+    renderModalContent(report.full_content || '', report);
+  }
 }
 window.openModal = openModal;
 
