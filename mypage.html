@@ -737,6 +737,7 @@ async function openDetail(report) {
   body.scrollTop = 0;
 
   const reportId = report.report_id;
+  console.log('[BZR] openDetail - report_id:', reportId, '/ full report:', report);
 
   // 캐시 히트
   if (cache[reportId]) {
@@ -746,14 +747,16 @@ async function openDetail(report) {
 
   // 상세 웹훅 호출
   try {
+    const detailPayload = {
+      action:    'fetch_detail',
+      report_id: reportId,
+      bzr_uid:   localStorage.getItem('bzr_uid') || '',
+    };
+    console.log('[BZR] detail webhook payload:', detailPayload);
     const res = await fetch(DETAIL_WEBHOOK, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        action:    'fetch_detail',
-        report_id: reportId,
-        bzr_uid:   localStorage.getItem('bzr_uid') || '',
-      }),
+      body:    JSON.stringify(detailPayload),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
@@ -766,7 +769,10 @@ async function openDetail(report) {
       data = typeof p === 'string' ? JSON.parse(p) : p;
     } catch { data = {}; }
 
-    const fullContent = data.full_content || data.content || '';
+    console.log('[BZR] data.full_content:', data.full_content);
+    console.log('[BZR] data keys:', Object.keys(data));
+    const fullContent = data.full_content || data.content || data.report || '';
+    console.log('[BZR] fullContent length:', fullContent.length);
     cache[reportId] = fullContent;
 
     renderContent(fullContent, report);
