@@ -794,7 +794,9 @@ function renderContent(content, report) {
     return;
   }
 
-  const lines = content.split('\n');
+  // Make.com 이 \n 을 이스케이프 문자열로 보내는 경우와 실제 줄바꿈 모두 처리
+  const normalized = content.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.split('\n');
   const sections = [];
   let curTitle = null;
   let curBody  = [];
