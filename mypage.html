@@ -817,10 +817,7 @@ function renderContent(content, report) {
     return;
   }
 
-  // 모든 형태의 줄바꿈 정규화
-  // \n (4글자: 백슬래시+n) → 실제 줄바꿈
-  // 
- → 실제 줄바꿈  
+  // 줄바꿈 정규화
   const normalized = content
     .replace(/\\n/g, '\n')
     .replace(/\\r/g, '')
