@@ -333,7 +333,7 @@ onAuthStateChanged(auth, async (user) => {
         console.error('[BZR] Session webhook error:', e);
       }
     }
-    window.location.replace('./analysis.html');
+    window.location.replace('./dashboard.html');
     return;
   }
   // 비로그인 → 로그인 화면 표시
@@ -368,7 +368,7 @@ btnLogin.addEventListener('click', async () => {
     await sendDataToWebhook(user);
 
     // 전송 완료 후 이동 (플래그는 페이지가 바뀌므로 자동 소멸)
-    window.location.replace('./analysis.html');
+    window.location.replace('./dashboard.html');
 
   } catch (err) {
     // 실패 시 플래그 해제 후 버튼 복구
@@ -384,7 +384,7 @@ btnLogin.addEventListener('click', async () => {
     } else if (err.message && err.message.startsWith('Webhook')) {
       // 웹훅은 실패했지만 로그인은 완료 → 그냥 이동
       console.warn('[BZR] Webhook failed, proceeding anyway');
-      window.location.replace('./analysis.html');
+      window.location.replace('./dashboard.html');
     } else {
       showError('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BZR — DASHBOARD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--bg-1:#080808;--bg-2:#0d0d0d;
+  --border:#1a1a1a;--border-2:#2e2e2e;--border-3:#3a3a3a;
+  --mute-3:#555;--mute-2:#888;--mute-1:#aaa;--text-1:#e0e0e0;--white:#fff;
+  --cyan:#00f0ff;--cyan-dim:rgba(0,240,255,0.08);--cyan-glow:rgba(0,240,255,0.25);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.08);
+  --red:#ff3333;
+  --sans:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text-1);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased;visibility:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,240,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scanline 8s linear infinite;pointer-events:none;z-index:9998;opacity:0.15}
+@keyframes scanline{0%{top:-1px;opacity:0}10%{opacity:0.15}90%{opacity:0.15}100%{top:100vh;opacity:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:52px;padding:0 clamp(12px,3vw,80px);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;background:rgba(0,0,0,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-mark{width:24px;height:24px;border:1px solid var(--cyan);display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:4px}
+.nav-logo-mark span{background:var(--cyan);display:block}
+.nav-logo-mark span:nth-child(2),.nav-logo-mark span:nth-child(3){opacity:0.3}
+.nav-logo-text{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.15em;color:var(--white)}
+.nav-logo-text em{color:var(--cyan);font-style:normal}
+.nav-center{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;min-width:0}
+.nav-tag{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;color:var(--mute-2);padding:4px 10px;border:1px solid var(--border)}
+.nav-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:0.1em;padding:4px 10px;border:1px solid rgba(0,240,255,0.2);background:var(--cyan-dim)}
+.nav-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 2s infinite}
+.nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-links a{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--mute-1);text-decoration:none;text-transform:uppercase;padding:6px 12px;border:1px solid transparent;transition:all 0.2s}
+.nav-links a:hover{color:var(--cyan);border-color:var(--border-2);background:var(--bg-2)}
+.nav-links a.active{color:var(--cyan);border-color:rgba(0,240,255,0.3);background:var(--cyan-dim)}
+.nav-user{display:flex;align-items:center;gap:10px}
+.nav-username{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--mute-1);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-logout-btn{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--mute-2);background:transparent;border:1px solid var(--border-3);border-radius:4px;padding:5px 10px;cursor:pointer;transition:all 0.2s}
+.nav-logout-btn:hover{color:var(--red);border-color:var(--red)}
+@media(max-width:900px){.nav-center{display:none}}
+@media(max-width:600px){.nav-username{display:none}}
+
+/* MAIN */
+main{min-height:100vh;padding:52px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:1}
+
+/* HEADER */
+.dash-header{text-align:center;padding:48px 20px 40px;animation:fadeUp 0.6s ease forwards}
+.dash-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--cyan);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:12px}
+.dash-eyebrow::before,.dash-eyebrow::after{content:'';width:24px;height:1px;background:var(--cyan)}
+.dash-title{font-size:clamp(26px,4vw,44px);font-weight:700;letter-spacing:-0.03em;color:var(--white);margin-bottom:10px;line-height:1.1}
+.dash-subtitle{font-family:var(--mono);font-size:12px;color:var(--mute-2);letter-spacing:0.08em}
+.dash-subtitle span{color:var(--cyan)}
+
+/* CARD GRID */
+.card-grid{display:grid;grid-template-columns:1fr 1fr;width:100%;max-width:880px;padding:0 clamp(16px,4vw,40px) 60px;gap:1px;background:var(--border);animation:fadeUp 0.7s ease 0.15s forwards;opacity:0}
+@media(max-width:680px){.card-grid{grid-template-columns:1fr}}
+
+/* SERVICE CARD */
+.service-card{background:var(--bg-1);padding:clamp(28px,4vw,48px) clamp(20px,3vw,40px);text-decoration:none;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:background 0.3s}
+.service-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transform:scaleX(0);transform-origin:left;transition:transform 0.4s ease}
+.card-a::before{background:var(--cyan)}
+.card-b::before{background:linear-gradient(90deg,var(--purple),var(--cyan))}
+.service-card:hover{background:var(--bg-2)}
+.service-card:hover::before{transform:scaleX(1)}
+
+/* BADGE */
+.card-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;padding:4px 10px;border-radius:2px;margin-bottom:24px;align-self:flex-start}
+.badge-standard{color:var(--cyan);border:1px solid rgba(0,240,255,0.3);background:var(--cyan-dim)}
+.badge-new{color:var(--purple);border:1px solid rgba(168,85,247,0.3);background:var(--purple-dim);animation:pulse 2.5s ease infinite}
+
+/* ICONS */
+.card-icon{width:60px;height:60px;margin-bottom:22px;position:relative;flex-shrink:0}
+
+/* Card A: personal orbit ring */
+.icon-personal{width:60px;height:60px;border:1.5px solid var(--border-3);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.icon-personal::before{content:'';position:absolute;inset:8px;border:1.5px solid var(--border-2);border-radius:50%}
+.icon-personal::after{content:'';position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:var(--cyan);border-right-color:var(--cyan);transform:rotate(-30deg)}
+.icon-personal-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+/* Card B: two orbits crossing */
+.icon-synergy{width:60px;height:60px;position:relative}
+.orb-a{position:absolute;width:42px;height:42px;top:1px;left:1px;border:1.5px solid var(--cyan);border-radius:50%;opacity:0.65}
+.orb-b{position:absolute;width:42px;height:42px;bottom:1px;right:1px;border:1.5px solid var(--purple);border-radius:50%;opacity:0.65}
+.orb-dot-a{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--cyan);top:3px;left:50%;transform:translateX(-50%);box-shadow:0 0 6px var(--cyan);animation:pulse 2s ease infinite}
+.orb-dot-b{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--purple);bottom:3px;right:50%;transform:translateX(50%);box-shadow:0 0 6px var(--purple);animation:pulse 2s ease infinite 0.6s}
+.orb-cross{position:absolute;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(168,85,247,0.6)}
+
+.card-label{font-family:var(--mono);font-size:9px;letter-spacing:0.2em;color:var(--mute-2);text-transform:uppercase;margin-bottom:8px}
+.card-title{font-size:clamp(18px,2.5vw,26px);font-weight:700;letter-spacing:-0.02em;color:var(--white);line-height:1.2;margin-bottom:12px}
+.card-desc{font-size:13px;color:var(--mute-1);line-height:1.8;margin-bottom:28px;flex:1}
+.card-cta{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;margin-top:auto}
+.card-a .card-cta{color:var(--cyan)}
+.card-b .card-cta{color:var(--purple)}
+.card-cta svg{transition:transform 0.2s}
+.service-card:hover .card-cta svg{transform:translateX(4px)}
+.card-num{position:absolute;bottom:16px;right:20px;font-family:var(--mono);font-size:44px;font-weight:700;color:var(--border);line-height:1;user-select:none;letter-spacing:-0.04em}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="./dashboard.html">
+    <div class="nav-logo-mark"><span></span><span></span><span></span><span></span></div>
+    <span class="nav-logo-text">BZ<em>R</em></span>
+  </a>
+  <div class="nav-center">
+    <span class="nav-tag">DATA STRATEGY PLATFORM</span>
+    <div class="nav-status">SYSTEM ONLINE</div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="./dashboard.html" class="active">대시보드</a>
+      <a href="./mypage.html">마이페이지</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username" class="nav-username"></span>
+      <button class="nav-logout-btn" id="navLogoutBtn">로그아웃</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="dash-header">
+    <p class="dash-eyebrow">SELECT SERVICE</p>
+    <h1 class="dash-title">어떤 분석을 시작할까요?</h1>
+    <p class="dash-subtitle">안녕하세요, <span id="welcomeName">—</span>님</p>
+  </div>
+
+  <div class="card-grid">
+    <!-- Card A -->
+    <a class="service-card card-a" href="./analysis.html">
+      <span class="card-badge badge-standard">● 가장 많이 사용됨</span>
+      <div class="card-icon">
+        <div class="icon-personal"><div class="icon-personal-dot"></div></div>
+      </div>
+      <p class="card-label">PERSONAL AUDIT</p>
+      <h2 class="card-title">내 인생<br>전략 분석</h2>
+      <p class="card-desc">출생 데이터를 수학적으로 파싱합니다. 기질적 설계도, 과거 궤적 복기, 미래 5개년 최적화 전략을 데이터로 도출합니다.</p>
+      <div class="card-cta">분석 시작
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7H13M7 1L13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="card-num">A</span>
+    </a>
+
+    <!-- Card B -->
+    <a class="service-card card-b" href="./synergy.html">
+      <span class="card-badge badge-new">✦ NEW · Beta</span>
+      <div class="card-icon">
+        <div class="icon-synergy">
+          <div class="orb-a"></div><div class="orb-b"></div>
+          <div class="orb-dot-a"></div><div class="orb-dot-b"></div>
+          <div class="orb-cross"></div>
+        </div>
+      </div>
+      <p class="card-label">SYNERGY AUDITOR</p>
+      <h2 class="card-title">궁합<br>분석</h2>
+      <p class="card-desc">두 사람의 출생 데이터를 교차 분석합니다. 연애·비즈니스 시너지, 충돌 지점, 협력 최적 타이밍을 수치로 도출합니다.</p>
+      <div class="card-cta">분석 시작
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7H13M7 1L13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="card-num">B</span>
+    </a>
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",authDomain:"bzr-proj.firebaseapp.com",
+  projectId:"bzr-proj",storageBucket:"bzr-proj.firebasestorage.app",
+  messagingSenderId:"130300251259",appId:"1:130300251259:web:0573bafb670f33bbfce6de"
+};
+const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) { window.location.replace('./index.html'); return; }
+  document.body.style.visibility = 'visible';
+  const name = user.displayName || user.email || '';
+  document.getElementById('nav-username').textContent = name;
+  document.getElementById('welcomeName').textContent  = (user.displayName || '').split(' ')[0] || name;
+});
+
+document.getElementById('navLogoutBtn').addEventListener('click', async () => {
+  try { await signOut(auth); } catch(e) {}
+  finally { localStorage.clear(); sessionStorage.clear(); window.location.replace('./index.html'); }
+});
+</script>
+</body>
+</html>
