@@ -476,7 +476,7 @@ main {
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="./analysis.html">
+  <a class="nav-logo" href="./dashboard.html">
     <div class="nav-logo-mark">
       <span></span><span></span><span></span><span></span>
     </div>
@@ -764,30 +764,24 @@ async function openDetail(report) {
     console.log('[BZR] detail raw:', rawText);
 
     let fullContent = '';
-    try {
-      // 먼저 그대로 파싱 시도
-      const p = JSON.parse(rawText);
-      const parsed = typeof p === 'string' ? JSON.parse(p) : p;
-      fullContent = parsed.full_content || parsed.content || parsed.report || '';
-      console.log('[BZR] JSON parsed OK, length:', fullContent.length);
-    } catch(e) {
-      // JSON 안의 실제 줄바꿈을 \n 으로 치환 후 재파싱
-      // Make.com 이 full_content 안 줄바꿈을 이스케이프하지 않고 보낼 때
+
+    // 1단계: "full_content" 키 뒤의 값을 정규식으로 직접 추출
+    // Make.com 이 줄바꿈을 이스케이프 안 해서 JSON.parse 실패하는 경우 대응
+    const fcMatch = rawText.match(/"full_content"\s*:\s*"([\s\S]*)"\s*[,}]/);
+    if (fcMatch) {
+      fullContent = fcMatch[1];
+      console.log('[BZR] regex extracted, length:', fullContent.length);
+    } else {
+      // 2단계: JSON 파싱 시도
       try {
-        const fixed = rawText.replace(/\n/g, '\\n').replace(/\r/g, '');
-        const p2 = JSON.parse(fixed);
-        const parsed2 = typeof p2 === 'string' ? JSON.parse(p2) : p2;
-        fullContent = parsed2.full_content || parsed2.content || parsed2.report || '';
-        console.log('[BZR] fixed JSON parsed OK, length:', fullContent.length);
-      } catch(e2) {
-        // 최후 수단: 정규식으로 full_content 값만 추출
-        const match = rawText.match(/"full_content"\s*:\s*"([\s\S]*?)(?:",|"\s*\})/);
-        if (match) {
-          fullContent = match[1].replace(/\\n/g, '\n');
-          console.log('[BZR] regex extracted, length:', fullContent.length);
-        } else {
-          console.log('[BZR] all parse failed');
-        }
+        const p = JSON.parse(rawText);
+        const parsed = typeof p === 'string' ? JSON.parse(p) : p;
+        fullContent = parsed.full_content || parsed.content || '';
+        console.log('[BZR] JSON parsed, length:', fullContent.length);
+      } catch(e) {
+        // 3단계: rawText 전체를 본문으로
+        fullContent = rawText.trim();
+        console.log('[BZR] using rawText, length:', fullContent.length);
       }
     }
 
