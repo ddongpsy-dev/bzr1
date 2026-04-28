@@ -570,10 +570,9 @@ import { getAuth, onAuthStateChanged, signOut }
 
 'use strict';
 
-// ═══════════════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════════════
-const WEBHOOK = 'https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0';
+// ── CONFIG ────────────────────────────────────────────────────────
+const LIST_WEBHOOK   = 'https://hook.us2.make.com/fhxbp2jnyn9fy3enuod13g1279cemjq0';
+const DETAIL_WEBHOOK = 'https://hook.us2.make.com/1lifeb9shmrw0xzcy58nq757k1af748q';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",
@@ -587,9 +586,7 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// ═══════════════════════════════════════════════════════════════════
-// DOM
-// ═══════════════════════════════════════════════════════════════════
+// ── DOM ───────────────────────────────────────────────────────────
 const stateLoading = document.getElementById('stateLoading');
 const stateEmpty   = document.getElementById('stateEmpty');
 const stateError   = document.getElementById('stateError');
@@ -597,9 +594,7 @@ const stateList    = document.getElementById('stateList');
 const reportList   = document.getElementById('reportList');
 const reportCount  = document.getElementById('reportCount');
 
-// ═══════════════════════════════════════════════════════════════════
-// 상태 전환
-// ═══════════════════════════════════════════════════════════════════
+// ── 상태 전환 ─────────────────────────────────────────────────────
 function showState(name) {
   stateLoading.style.display = name === 'loading' ? 'flex'  : 'none';
   stateEmpty.style.display   = name === 'empty'   ? 'block' : 'none';
@@ -607,125 +602,7 @@ function showState(name) {
   stateList.style.display    = name === 'list'    ? 'block' : 'none';
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// 리포트 로드
-// ═══════════════════════════════════════════════════════════════════
-async function loadReports(googleUid) {
-  const bzrUid = localStorage.getItem('bzr_uid') || '';
-  // googleUid: onAuthStateChanged 에서 Firebase user.uid 직접 전달
-  // localStorage 의존 없이 항상 최신 인증 정보 사용
-  if (!bzrUid && !googleUid) { showState('error'); return; }
-
-  showState('loading');
-
-  try {
-    const res = await fetch(WEBHOOK, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        action:     'fetch_reports',
-        bzr_uid:    bzrUid,
-        google_uid: googleUid,
-      }),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const rawText = await res.text();
-    console.log('[BZR] ← Raw response:', rawText);
-
-    let data = {};
-    try {
-      const parsed = JSON.parse(rawText);
-      data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-    } catch {
-      console.warn('[BZR] JSON parse failed:', rawText);
-    }
-    console.log('[BZR] ← Parsed:', data);
-
-    // 응답 구조 정규화 (배열 직접 / { reports:[...] } / { data:[...] } / 단일 객체)
-    let reports = [];
-    if (Array.isArray(data)) {
-      reports = data;
-    } else if (typeof data === 'object' && data !== null) {
-      const arrKey = Object.keys(data).find(k => Array.isArray(data[k]));
-      if (arrKey) {
-        reports = data[arrKey];
-      } else if (data.full_content || data.output_summary) {
-        reports = [data];
-      }
-    }
-
-    // null 값으로 채워진 빈 객체 제거 (Make.com이 데이터 없을 때 null로 채운 객체를 보냄)
-    reports = reports.filter(r => r.output_summary || r.full_content || r.created_at);
-
-    console.log('[BZR] ← Reports:', reports.length, '건');
-
-    if (reports.length === 0) { showState('empty'); return; }
-
-    // 응답에서 bzr_uid 복원 (로그아웃 후 재접속 시 복원)
-    const confirmedUid = reports[0]?.bzr_uid;
-    if (confirmedUid) {
-      localStorage.setItem('bzr_uid', confirmedUid);
-      document.getElementById('displayUid').textContent = confirmedUid;
-      console.log('[BZR] bzr_uid restored:', confirmedUid);
-    }
-
-    // created_at 기준 내림차순 정렬
-    reports.sort((a, b) => {
-      const da = a.created_at ? new Date(a.created_at) : 0;
-      const db = b.created_at ? new Date(b.created_at) : 0;
-      return db - da;
-    });
-
-    renderList(reports);
-
-  } catch(err) {
-    console.error('[BZR] Reports fetch error:', err);
-    document.getElementById('errorText').textContent =
-      `리포트를 불러오는 중 오류가 발생했습니다.\n(${err.message})`;
-    showState('error');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// 목록 렌더링
-// ═══════════════════════════════════════════════════════════════════
-function renderList(reports) {
-  reportCount.textContent = reports.length;
-  reportList.innerHTML    = '';
-
-  reports.forEach((report, idx) => {
-    const title = report.output_summary || `리포트 ${idx + 1}`;
-    const date  = report.created_at     || '—';
-    const tag   = report.report_id      ? `#${report.report_id}` : 'NATAL';
-
-    const item = document.createElement('div');
-    item.className = 'report-item';
-    item.style.animationDelay = (idx * 0.06) + 's';
-    item.innerHTML = `
-      <span class="report-item-num">${String(idx + 1).padStart(2, '0')}</span>
-      <div class="report-item-body">
-        <p class="report-item-title">${escHtml(title)}</p>
-        <div class="report-item-meta">
-          <span class="report-item-date">${escHtml(formatDate(date))}</span>
-          <span class="report-item-tag">${escHtml(tag)}</span>
-        </div>
-      </div>
-      <svg class="report-item-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-    item.addEventListener('click', () => fetchAndOpenModal(report.report_id, report));
-    reportList.appendChild(item);
-  });
-
-  showState('list');
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// 유틸
-// ═══════════════════════════════════════════════════════════════════
+// ── 유틸 ─────────────────────────────────────────────────────────
 function formatDate(raw) {
   if (!raw || raw === '—') return '—';
   try {
@@ -734,27 +611,129 @@ function formatDate(raw) {
     return d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
   } catch { return raw; }
 }
-
 function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// 2단계: 상세 조회 (report_id 로 full_content 가져오기)
-// ═══════════════════════════════════════════════════════════════════
-const DETAIL_WEBHOOK = 'https://hook.us2.make.com/1lifeb9shmrw0xzcy58nq757k1af748q';
-const contentCache   = {};  // { report_id: full_content } — 캐시
+// ── 1단계: 목록 로드 (report_id, created_at, output_summary) ──────
+async function loadReports(googleUid) {
+  const bzrUid = localStorage.getItem('bzr_uid') || '';
+  if (!bzrUid && !googleUid) { showState('error'); return; }
 
-async function fetchAndOpenModal(reportId, report) {
-  // 모달 먼저 열고 로딩 표시
-  openModalShell(report);
+  showState('loading');
+  try {
+    const res = await fetch(LIST_WEBHOOK, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:     'fetch_reports',
+        bzr_uid:    bzrUid,
+        google_uid: googleUid,
+      }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
 
-  // 캐시에 있으면 웹훅 재호출 없이 바로 렌더
-  if (contentCache[reportId]) {
-    console.log('[BZR] cache hit:', reportId);
-    renderModalContent(contentCache[reportId], report);
+    const rawText = await res.text();
+    console.log('[BZR] list raw:', rawText);
+
+    let data = {};
+    try {
+      const p = JSON.parse(rawText);
+      data = typeof p === 'string' ? JSON.parse(p) : p;
+    } catch { data = {}; }
+
+    let reports = [];
+    if (Array.isArray(data)) {
+      reports = data;
+    } else {
+      const key = Object.keys(data).find(k => Array.isArray(data[k]));
+      if (key) reports = data[key];
+    }
+
+    // null 로 가득찬 빈 행 제거
+    reports = reports.filter(r => r.report_id || r.output_summary || r.created_at);
+
+    // bzr_uid 복원
+    const uid = reports[0] && reports[0].bzr_uid;
+    if (uid) {
+      localStorage.setItem('bzr_uid', uid);
+      document.getElementById('displayUid').textContent = uid;
+    }
+
+    // 최신순 정렬
+    reports.sort((a, b) => {
+      return (b.created_at ? new Date(b.created_at) : 0) -
+             (a.created_at ? new Date(a.created_at) : 0);
+    });
+
+    if (reports.length === 0) { showState('empty'); return; }
+    renderList(reports);
+
+  } catch(err) {
+    console.error('[BZR] list error:', err);
+    document.getElementById('errorText').textContent =
+      '리포트를 불러오는 중 오류가 발생했습니다.';
+    showState('error');
+  }
+}
+
+// ── 목록 렌더링 ───────────────────────────────────────────────────
+function renderList(reports) {
+  reportCount.textContent = reports.length;
+  reportList.innerHTML    = '';
+
+  reports.forEach((report, idx) => {
+    const title = report.output_summary || ('리포트 ' + (idx + 1));
+    const date  = report.created_at     || '—';
+    const tag   = report.report_id      ? ('#' + report.report_id) : 'NATAL';
+
+    const item = document.createElement('div');
+    item.className = 'report-item';
+    item.style.animationDelay = (idx * 0.06) + 's';
+    item.innerHTML =
+      '<span class="report-item-num">' + String(idx + 1).padStart(2, '0') + '</span>' +
+      '<div class="report-item-body">' +
+        '<p class="report-item-title">' + escHtml(title) + '</p>' +
+        '<div class="report-item-meta">' +
+          '<span class="report-item-date">' + escHtml(formatDate(date)) + '</span>' +
+          '<span class="report-item-tag">' + escHtml(tag) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<svg class="report-item-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">' +
+        '<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+
+    item.addEventListener('click', () => openDetail(report));
+    reportList.appendChild(item);
+  });
+
+  showState('list');
+}
+
+// ── 2단계: 상세 조회 + 캐시 ──────────────────────────────────────
+const cache = {};
+
+async function openDetail(report) {
+  // 모달 열고 로딩 표시
+  document.getElementById('modalTitle').textContent = report.output_summary || '분석 리포트';
+  document.getElementById('modalDate').textContent  = formatDate(report.created_at || '—');
+  const body = document.getElementById('modalBody');
+  body.innerHTML =
+    '<div class="modal-loading">' +
+      '<div class="modal-loading-spinner"></div>' +
+      '<p class="modal-loading-text">데이터 로딩 중...</p>' +
+    '</div>';
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  body.scrollTop = 0;
+
+  const reportId = report.report_id;
+
+  // 캐시 히트
+  if (cache[reportId]) {
+    renderContent(cache[reportId], report);
     return;
   }
 
@@ -769,89 +748,48 @@ async function fetchAndOpenModal(reportId, report) {
         bzr_uid:   localStorage.getItem('bzr_uid') || '',
       }),
     });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const rawText = await res.text();
+    console.log('[BZR] detail raw:', rawText);
+
     let data = {};
     try {
-      const parsed = JSON.parse(rawText);
-      data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+      const p = JSON.parse(rawText);
+      data = typeof p === 'string' ? JSON.parse(p) : p;
     } catch { data = {}; }
 
-    const fullContent = data.full_content || data.content || data.report || '';
+    const fullContent = data.full_content || data.content || '';
+    cache[reportId] = fullContent;
 
-    // 캐시에 저장
-    contentCache[reportId] = fullContent;
-    console.log('[BZR] cached:', reportId);
-
-    renderModalContent(fullContent, report);
+    renderContent(fullContent, report);
 
   } catch(err) {
-    console.error('[BZR] Detail fetch error:', err);
-    const body = document.getElementById('modalBody');
-    if (body) {
-      body.innerHTML = '';
-      const el = document.createElement('p');
-      el.style.cssText = 'color:var(--red);font-size:13px;padding:20px 0';
-      el.textContent   = '상세 내용을 불러오는 중 오류가 발생했습니다.';
-      body.appendChild(el);
-    }
+    console.error('[BZR] detail error:', err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;padding:20px 0">상세 내용을 불러오는 중 오류가 발생했습니다.</p>';
   }
 }
 
-// 모달 열기 (제목/날짜만 먼저, 본문은 로딩 스피너)
-function openModalShell(report) {
-  const titleEl = document.getElementById('modalTitle');
-  const dateEl  = document.getElementById('modalDate');
-  const body    = document.getElementById('modalBody');
-
-  if (titleEl) titleEl.textContent = report.output_summary || '분석 리포트';
-  if (dateEl)  dateEl.textContent  = formatDate(report.created_at || '—');
-
-  if (body) {
-    body.innerHTML = `
-      <div class="modal-loading">
-        <div class="modal-loading-spinner"></div>
-        <p class="modal-loading-text">데이터 로딩 중...</p>
-      </div>`;
-  }
-
-  document.getElementById('modalBackdrop').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  requestAnimationFrame(() => {
-    const b = document.getElementById('modalBody');
-    if (b) b.scrollTop = 0;
-  });
-}
-
-// full_content 를 받아서 모달 본문 렌더링
-function renderModalContent(content, report) {
+// ── 모달 본문 렌더링 ──────────────────────────────────────────────
+function renderContent(content, report) {
   const body = document.getElementById('modalBody');
   if (!body) return;
-
   body.innerHTML = '';
 
   if (!content || !content.trim()) {
-    const el = document.createElement('p');
-    el.style.cssText = 'color:var(--mute-2);font-size:13px;padding:20px 0';
-    el.textContent   = '본문 내용이 없습니다.';
-    body.appendChild(el);
+    body.innerHTML = '<p style="color:var(--mute-2);font-size:13px;padding:20px 0">본문 내용이 없습니다.</p>';
     return;
   }
 
-  const lines    = content.replace(/
-/g, '
-').split('
+  const lines = content.split('
 ');
   const sections = [];
-  let curTitle   = null;
-  let curBody    = [];
+  let curTitle = null;
+  let curBody  = [];
 
-  lines.forEach(line => {
+  lines.forEach(function(line) {
     if (/^\s*#{1,6}/.test(line)) {
-      if (curTitle !== null)
-        sections.push({ title: curTitle, body: curBody.join('
+      if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('
 ').trim() });
       curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
       curBody  = [];
@@ -860,29 +798,25 @@ function renderModalContent(content, report) {
       curBody.push(line);
     }
   });
-  if (curTitle !== null)
-    sections.push({ title: curTitle, body: curBody.join('
+  if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('
 ').trim() });
+  if (sections.length === 0) sections.push({ title: report.output_summary || '분석 리포트', body: content });
 
-  if (sections.length === 0)
-    sections.push({ title: report.output_summary || '분석 리포트', body: content });
-
-  sections.forEach((sec, i) => {
-    const cleanTitle = sec.title
-      .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
-    const cleanBody  = sec.body
+  sections.forEach(function(sec, i) {
+    var cleanTitle = sec.title.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+    var cleanBody  = sec.body
       .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/\*(.+?)\*/gs, '$1')
       .replace(/^[\-\*•]\s+/gm, '').replace(/^\d+\.\s+/gm, '').trim();
 
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'modal-section';
     div.style.animationDelay = (i * 0.06) + 's';
 
-    const labelEl = document.createElement('p');
+    var labelEl = document.createElement('p');
     labelEl.className   = 'modal-section-label';
     labelEl.textContent = cleanTitle;
 
-    const textEl = document.createElement('p');
+    var textEl = document.createElement('p');
     textEl.className   = 'modal-section-text';
     textEl.textContent = cleanBody;
 
@@ -891,61 +825,38 @@ function renderModalContent(content, report) {
     body.appendChild(div);
   });
 
-  requestAnimationFrame(() => { body.scrollTop = 0; });
+  requestAnimationFrame(function() { body.scrollTop = 0; });
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// 모달 (레거시 — 내부적으로 openModalShell 로 위임)
-// ═══════════════════════════════════════════════════════════════════
-function openModal(report) {
-  // report_id 있으면 2단계 조회, 없으면 report.full_content 직접 사용
-  if (report.report_id) {
-    fetchAndOpenModal(report.report_id, report);
-  } else {
-    openModalShell(report);
-    renderModalContent(report.full_content || '', report);
-  }
-}
-window.openModal = openModal;
-
+// ── 모달 닫기 ─────────────────────────────────────────────────────
 function closeModal() {
   document.getElementById('modalBackdrop').classList.remove('open');
   document.body.style.overflow = '';
-  const modalBodyEl = document.getElementById('modalBody');
-  if (modalBodyEl) modalBodyEl.scrollTop = 0;
+  var b = document.getElementById('modalBody');
+  if (b) b.scrollTop = 0;
 }
-// ★ onclick="closeModal()" 에서 접근할 수 있도록 전역 노출
 window.closeModal = closeModal;
 
-document.getElementById('modalBackdrop').addEventListener('click', e => {
+document.getElementById('modalBackdrop').addEventListener('click', function(e) {
   if (e.target === document.getElementById('modalBackdrop')) closeModal();
 });
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
-// ═══════════════════════════════════════════════════════════════════
-// Firebase 세션 감지 — 모든 로직이 같은 모듈 안에 있으므로 타이밍 문제 없음
-// ═══════════════════════════════════════════════════════════════════
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.replace('./index.html');
-    return;
-  }
-  // 페이지 표시
+// ── Firebase 세션 감지 ────────────────────────────────────────────
+onAuthStateChanged(auth, function(user) {
+  if (!user) { window.location.replace('./index.html'); return; }
   document.body.style.visibility = 'visible';
-  // 유저명
-  const nameEl = document.getElementById('nav-username');
+  var nameEl = document.getElementById('nav-username');
   if (nameEl) nameEl.textContent = user.displayName || user.email || '';
-  // UID 표시
-  const bzrUid = localStorage.getItem('bzr_uid') || '';
+  var bzrUid = localStorage.getItem('bzr_uid') || '';
   document.getElementById('displayUid').textContent = bzrUid || user.uid;
-  // ★ Firebase user.uid 를 직접 파라미터로 전달 — localStorage 의존 없음
   loadReports(user.uid);
 });
 
-// 로그아웃
-document.getElementById('navLogoutBtn').addEventListener('click', async () => {
+// ── 로그아웃 ─────────────────────────────────────────────────────
+document.getElementById('navLogoutBtn').addEventListener('click', async function() {
   try { await signOut(auth); } catch(e) { console.error(e); }
   finally {
     localStorage.clear();
