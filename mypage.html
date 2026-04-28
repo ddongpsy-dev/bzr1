@@ -787,8 +787,7 @@ function renderContent(content, report) {
 
   lines.forEach(function(line) {
     if (/^\s*#{1,6}/.test(line)) {
-      if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('
-').trim() });
+      if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
       curTitle = line.replace(/^\s*#{1,6}\s*/, '').replace(/[\[\]]/g, '').trim();
       curBody  = [];
     } else {
@@ -796,8 +795,7 @@ function renderContent(content, report) {
       curBody.push(line);
     }
   });
-  if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('
-').trim() });
+  if (curTitle !== null) sections.push({ title: curTitle, body: curBody.join('\n').trim() });
   if (sections.length === 0) sections.push({ title: report.output_summary || '분석 리포트', body: content });
 
   sections.forEach(function(sec, i) {
