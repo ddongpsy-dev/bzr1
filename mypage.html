@@ -763,16 +763,19 @@ async function openDetail(report) {
     const rawText = await res.text();
     console.log('[BZR] detail raw:', rawText);
 
-    let data = {};
+    let fullContent = '';
     try {
       const p = JSON.parse(rawText);
-      data = typeof p === 'string' ? JSON.parse(p) : p;
-    } catch { data = {}; }
+      const parsed = typeof p === 'string' ? JSON.parse(p) : p;
+      fullContent = parsed.full_content || parsed.content || parsed.report || '';
+      console.log('[BZR] JSON parsed OK, full_content length:', fullContent.length);
+    } catch(e) {
+      // JSON 파싱 실패 → rawText 자체가 본문일 수 있음
+      console.log('[BZR] JSON parse failed, using rawText as content');
+      fullContent = rawText.trim();
+    }
 
-    console.log('[BZR] data.full_content:', data.full_content);
-    console.log('[BZR] data keys:', Object.keys(data));
-    const fullContent = data.full_content || data.content || data.report || '';
-    console.log('[BZR] fullContent length:', fullContent.length);
+    console.log('[BZR] fullContent final length:', fullContent.length);
     cache[reportId] = fullContent;
 
     renderContent(fullContent, report);
@@ -789,14 +792,27 @@ function renderContent(content, report) {
   if (!body) return;
   body.innerHTML = '';
 
+  console.log('[BZR] renderContent called, content type:', typeof content);
+  console.log('[BZR] content length:', content ? content.length : 0);
+  console.log('[BZR] content first 100 chars:', content ? JSON.stringify(content.substring(0, 100)) : 'EMPTY');
+
   if (!content || !content.trim()) {
     body.innerHTML = '<p style="color:var(--mute-2);font-size:13px;padding:20px 0">본문 내용이 없습니다.</p>';
     return;
   }
 
-  // Make.com 이 \n 을 이스케이프 문자열로 보내는 경우와 실제 줄바꿈 모두 처리
-  const normalized = content.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // 모든 형태의 줄바꿈 정규화
+  // \n (4글자: 백슬래시+n) → 실제 줄바꿈
+  // 
+ → 실제 줄바꿈  
+  const normalized = content
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+  console.log('[BZR] normalized first 100:', JSON.stringify(normalized.substring(0, 100)));
   const lines = normalized.split('\n');
+  console.log('[BZR] lines count:', lines.length);
   const sections = [];
   let curTitle = null;
   let curBody  = [];
