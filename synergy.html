@@ -451,6 +451,8 @@ onAuthStateChanged(auth, (user) => {
   if (!user) { window.location.replace('./index.html'); return; }
   document.body.style.visibility = 'visible';
   document.getElementById('nav-username').textContent = user.displayName || user.email || '';
+  // google_uid 항상 저장 (bzr_uid 없을 때 폴백용)
+  localStorage.setItem('bzr_google_uid', user.uid);
   // User A 프리필 시도
   prefillUserA(user);
 });
@@ -494,6 +496,40 @@ requiredFields.forEach(id => {
   document.getElementById(id).addEventListener('change', checkReady);
 });
 
+
+// ── bzr_uid 보장 함수 ─────────────────────────────────────────────
+// bzr_uid 가 없으면 로그인 웹훅을 재호출해서 받아옴
+async function ensureBzrUid(user) {
+  if (localStorage.getItem('bzr_uid')) return true; // 이미 있으면 패스
+
+  console.log('[BZR] bzr_uid missing, re-fetching from login webhook...');
+  try {
+    const res = await fetch('https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({
+        google_uid:        user.uid,
+        email:             user.email,
+        display_name:      user.displayName,
+        marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
+      }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw  = await res.text();
+    const data = JSON.parse(raw);
+    if (data.bzr_uid) {
+      localStorage.setItem('bzr_uid', data.bzr_uid);
+      console.log('[BZR] bzr_uid restored:', data.bzr_uid);
+      return true;
+    }
+    console.error('[BZR] bzr_uid still not in response');
+    return false;
+  } catch(e) {
+    console.error('[BZR] ensureBzrUid error:', e);
+    return false;
+  }
+}
+
 // ── UUID 생성 ─────────────────────────────────────────────────
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -509,6 +545,11 @@ function getCityCoords(cityName) {
 
 // ── 폼 제출 ──────────────────────────────────────────────────
 window.submitSynergy = async function() {
+  // bzr_uid 보장 (없으면 로그인 웹훅 재호출)
+  const auth2 = getAuth(getApps()[0]);
+  const currentUser = auth2.currentUser;
+  if (currentUser) await ensureBzrUid(currentUser);
+
   // 필드 검증
   const aName  = document.getElementById('a-name').value.trim();
   const aBirth = document.getElementById('a-birth').value.trim();
@@ -540,11 +581,17 @@ window.submitSynergy = async function() {
   const aP = parseBirth(aBirth, aTime);
   const bP = parseBirth(bBirth, bTime);
 
+  // bzr_uid 없으면 google_uid 폴백 (모바일 팝업 차단 등으로 저장 안 된 케이스 대비)
+  const bzrUid    = localStorage.getItem('bzr_uid')        || '';
+  const googleUid = localStorage.getItem('bzr_google_uid') || '';
+  console.log('[BZR] bzr_uid:', bzrUid, '/ google_uid:', googleUid);
+
   const payload = {
-    action:    'synergy_report',
-    report_id: reportId,
-    bzr_uid:   localStorage.getItem('bzr_uid') || '',
-    context:   window.currentContext,
+    action:     'synergy_report',
+    report_id:  reportId,
+    bzr_uid:    bzrUid,
+    google_uid: googleUid,
+    context:    window.currentContext,
     user_a: {
       name:      aName,
       year:      aP.year,
