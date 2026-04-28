@@ -1827,9 +1827,31 @@ function showOnly(el) {
 // 13. SUBMIT
 // ═══════════════════════════════════════════════════════════════════
 async function submitToAPI() {
-  // bzr_uid 보장
-  const auth2 = getAuth(getApps()[0]);
-  if (auth2.currentUser) await ensureBzrUid(auth2.currentUser);
+  // bzr_uid 없으면 로그인 웹훅 재호출해서 복원
+  if (!localStorage.getItem('bzr_uid')) {
+    const googleUid = localStorage.getItem('bzr_google_uid') || '';
+    if (googleUid) {
+      console.log('[BZR] bzr_uid missing, re-fetching...');
+      try {
+        const res = await fetch('https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            google_uid: googleUid,
+            marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
+          }),
+        });
+        const raw  = await res.text();
+        const data = JSON.parse(raw);
+        if (data.bzr_uid) {
+          localStorage.setItem('bzr_uid', data.bzr_uid);
+          console.log('[BZR] bzr_uid restored:', data.bzr_uid);
+        }
+      } catch(e) {
+        console.error('[BZR] bzr_uid restore error:', e);
+      }
+    }
+  }
 
   const payload = buildPayload();
   console.log('[BZR] → Make.com payload:', payload);
@@ -2147,36 +2169,7 @@ const auth = getAuth(app);
 
 // ── bzr_uid 보장 함수 ─────────────────────────────────────────────
 // bzr_uid 가 없으면 로그인 웹훅을 재호출해서 받아옴
-async function ensureBzrUid(user) {
-  if (localStorage.getItem('bzr_uid')) return true; // 이미 있으면 패스
 
-  console.log('[BZR] bzr_uid missing, re-fetching from login webhook...');
-  try {
-    const res = await fetch('https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae', {
-      method:  'POST',
-      headers: {'Content-Type': 'application/json'},
-      body:    JSON.stringify({
-        google_uid:        user.uid,
-        email:             user.email,
-        display_name:      user.displayName,
-        marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
-      }),
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const raw  = await res.text();
-    const data = JSON.parse(raw);
-    if (data.bzr_uid) {
-      localStorage.setItem('bzr_uid', data.bzr_uid);
-      console.log('[BZR] bzr_uid restored:', data.bzr_uid);
-      return true;
-    }
-    console.error('[BZR] bzr_uid still not in response');
-    return false;
-  } catch(e) {
-    console.error('[BZR] ensureBzrUid error:', e);
-    return false;
-  }
-}
 
 // ── 세션 감지: 비로그인이면 index.html로 ─────────────────────────────
 // 웹훅은 index.html에서 이미 완료 후 이동했으므로 여기선 세션 체크만 담당
