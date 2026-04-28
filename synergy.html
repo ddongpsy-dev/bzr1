@@ -349,32 +349,91 @@ const auth = getAuth(app);
 
 // ── 도시 좌표 DB ─────────────────────────────────────────────────
 const CITIES = [
+  // 서울 및 수도권
   {name:"서울",label:"서울특별시",lat:"37.5665",lng:"126.9780"},
-  {name:"부산",label:"부산광역시",lat:"35.1796",lng:"129.0756"},
-  {name:"인천",label:"인천광역시",lat:"37.4563",lng:"126.7052"},
-  {name:"대구",label:"대구광역시",lat:"35.8714",lng:"128.6014"},
-  {name:"대전",label:"대전광역시",lat:"36.3504",lng:"127.3845"},
-  {name:"광주",label:"광주광역시",lat:"35.1595",lng:"126.8526"},
-  {name:"울산",label:"울산광역시",lat:"35.5384",lng:"129.3114"},
   {name:"수원",label:"경기 수원시",lat:"37.2636",lng:"127.0286"},
   {name:"성남",label:"경기 성남시",lat:"37.4196",lng:"127.1265"},
-  {name:"고양",label:"경기 고양시",lat:"37.6584",lng:"126.8320"},
   {name:"용인",label:"경기 용인시",lat:"37.2411",lng:"127.1776"},
+  {name:"고양",label:"경기 고양시",lat:"37.6584",lng:"126.8320"},
+  {name:"부천",label:"경기 부천시",lat:"37.5034",lng:"126.7660"},
+  {name:"안산",label:"경기 안산시",lat:"37.3219",lng:"126.8308"},
+  {name:"안양",label:"경기 안양시",lat:"37.3943",lng:"126.9568"},
+  {name:"남양주",label:"경기 남양주시",lat:"37.6360",lng:"127.2165"},
+  {name:"화성",label:"경기 화성시",lat:"37.1995",lng:"126.8312"},
+  {name:"평택",label:"경기 평택시",lat:"36.9921",lng:"127.1128"},
+  {name:"의정부",label:"경기 의정부시",lat:"37.7381",lng:"127.0337"},
+  {name:"파주",label:"경기 파주시",lat:"37.7601",lng:"126.7800"},
+  {name:"시흥",label:"경기 시흥시",lat:"37.3800",lng:"126.8030"},
+  {name:"김포",label:"경기 김포시",lat:"37.6152",lng:"126.7157"},
+  {name:"광주(경기)",label:"경기 광주시",lat:"37.4296",lng:"127.2559"},
+  {name:"광명",label:"경기 광명시",lat:"37.4786",lng:"126.8644"},
+  {name:"하남",label:"경기 하남시",lat:"37.5394",lng:"127.2149"},
+  {name:"인천",label:"인천광역시",lat:"37.4563",lng:"126.7052"},
+  // 강원
+  {name:"춘천",label:"강원 춘천시",lat:"37.8813",lng:"127.7300"},
+  {name:"원주",label:"강원 원주시",lat:"37.3422",lng:"127.9202"},
+  {name:"강릉",label:"강원 강릉시",lat:"37.7519",lng:"128.8761"},
+  {name:"속초",label:"강원 속초시",lat:"38.2070",lng:"128.5918"},
+  // 충청
+  {name:"대전",label:"대전광역시",lat:"36.3504",lng:"127.3845"},
   {name:"청주",label:"충북 청주시",lat:"36.6424",lng:"127.4890"},
+  {name:"충주",label:"충북 충주시",lat:"36.9910",lng:"127.9259"},
+  {name:"천안",label:"충남 천안시",lat:"36.8151",lng:"127.1139"},
+  {name:"아산",label:"충남 아산시",lat:"36.7898",lng:"127.0020"},
+  {name:"서산",label:"충남 서산시",lat:"36.7847",lng:"126.4503"},
+  // 전라
+  {name:"광주",label:"광주광역시",lat:"35.1595",lng:"126.8526"},
   {name:"전주",label:"전북 전주시",lat:"35.8242",lng:"127.1480"},
+  {name:"군산",label:"전북 군산시",lat:"35.9677",lng:"126.7368"},
+  {name:"익산",label:"전북 익산시",lat:"35.9483",lng:"126.9577"},
+  {name:"목포",label:"전남 목포시",lat:"34.8118",lng:"126.3922"},
+  {name:"여수",label:"전남 여수시",lat:"34.7604",lng:"127.6622"},
+  {name:"순천",label:"전남 순천시",lat:"34.9506",lng:"127.4872"},
+  // 경상
+  {name:"대구",label:"대구광역시",lat:"35.8714",lng:"128.6014"},
+  {name:"부산",label:"부산광역시",lat:"35.1796",lng:"129.0756"},
+  {name:"울산",label:"울산광역시",lat:"35.5384",lng:"129.3114"},
+  {name:"포항",label:"경북 포항시",lat:"36.0190",lng:"129.3435"},
+  {name:"경주",label:"경북 경주시",lat:"35.8562",lng:"129.2247"},
+  {name:"구미",label:"경북 구미시",lat:"36.1195",lng:"128.3446"},
+  {name:"안동",label:"경북 안동시",lat:"36.5684",lng:"128.7294"},
   {name:"창원",label:"경남 창원시",lat:"35.2279",lng:"128.6811"},
-  {name:"제주",label:"제주특별자치도",lat:"33.4996",lng:"126.5312"},
+  {name:"진주",label:"경남 진주시",lat:"35.1799",lng:"128.1076"},
+  {name:"김해",label:"경남 김해시",lat:"35.2285",lng:"128.8892"},
+  {name:"거제",label:"경남 거제시",lat:"34.8799",lng:"128.6210"},
+  {name:"양산",label:"경남 양산시",lat:"35.3350",lng:"129.0374"},
+  // 제주
+  {name:"제주",label:"제주특별자치도 제주시",lat:"33.4996",lng:"126.5312"},
+  {name:"서귀포",label:"제주특별자치도 서귀포시",lat:"33.2541",lng:"126.5600"},
+  // 아시아
   {name:"도쿄",label:"도쿄 (Tokyo)",lat:"35.6762",lng:"139.6503"},
   {name:"오사카",label:"오사카 (Osaka)",lat:"34.6937",lng:"135.5023"},
   {name:"베이징",label:"베이징 (Beijing)",lat:"39.9042",lng:"116.4074"},
   {name:"상하이",label:"상하이 (Shanghai)",lat:"31.2304",lng:"121.4737"},
-  {name:"뉴욕",label:"뉴욕 (New York)",lat:"40.7128",lng:"-74.0060"},
-  {name:"로스앤젤레스",label:"로스앤젤레스 (LA)",lat:"34.0522",lng:"-118.2437"},
+  {name:"홍콩",label:"홍콩 (Hong Kong)",lat:"22.3193",lng:"114.1694"},
+  {name:"타이페이",label:"타이페이 (Taipei)",lat:"25.0330",lng:"121.5654"},
+  {name:"싱가포르",label:"싱가포르 (Singapore)",lat:"1.3521",lng:"103.8198"},
+  {name:"방콕",label:"방콕 (Bangkok)",lat:"13.7563",lng:"100.5018"},
+  // 유럽
   {name:"런던",label:"런던 (London)",lat:"51.5074",lng:"-0.1278"},
   {name:"파리",label:"파리 (Paris)",lat:"48.8566",lng:"2.3522"},
-  {name:"싱가포르",label:"싱가포르 (Singapore)",lat:"1.3521",lng:"103.8198"},
+  {name:"베를린",label:"베를린 (Berlin)",lat:"52.5200",lng:"13.4050"},
+  {name:"로마",label:"로마 (Rome)",lat:"41.9028",lng:"12.4964"},
+  {name:"암스테르담",label:"암스테르담 (Amsterdam)",lat:"52.3676",lng:"4.9041"},
+  // 미주
+  {name:"뉴욕",label:"뉴욕 (New York)",lat:"40.7128",lng:"-74.0060"},
+  {name:"로스앤젤레스",label:"로스앤젤레스 (LA)",lat:"34.0522",lng:"-118.2437"},
+  {name:"시카고",label:"시카고 (Chicago)",lat:"41.8781",lng:"-87.6298"},
+  {name:"샌프란시스코",label:"샌프란시스코 (SF)",lat:"37.7749",lng:"-122.4194"},
+  {name:"토론토",label:"토론토 (Toronto)",lat:"43.6532",lng:"-79.3832"},
+  {name:"밴쿠버",label:"밴쿠버 (Vancouver)",lat:"49.2827",lng:"-123.1207"},
+  // 기타
   {name:"시드니",label:"시드니 (Sydney)",lat:"-33.8688",lng:"151.2093"},
+  {name:"멜버른",label:"멜버른 (Melbourne)",lat:"-37.8136",lng:"144.9631"},
   {name:"두바이",label:"두바이 (Dubai)",lat:"25.2048",lng:"55.2708"},
+  {name:"뭄바이",label:"뭄바이 (Mumbai)",lat:"19.0760",lng:"72.8777"},
+  {name:"모스크바",label:"모스크바 (Moscow)",lat:"55.7558",lng:"37.6173"},
+  {name:"이스탄불",label:"이스탄불 (Istanbul)",lat:"41.0082",lng:"28.9784"},
 ];
 
 // 도시 셀렉트 초기화
@@ -471,22 +530,40 @@ window.submitSynergy = async function() {
   // ★ report_id 프론트엔드에서 생성 (누락 방지)
   const reportId = generateUUID();
 
+  // 날짜/시간 분리 파싱
+  function parseBirth(dateStr, timeStr) {
+    const [year, month, date] = (dateStr || '').split('-');
+    const [hours, minutes]    = (timeStr  || '00:00').split(':');
+    return { year: year||'', month: month||'', date: date||'', hours: hours||'00', minutes: minutes||'00' };
+  }
+
+  const aP = parseBirth(aBirth, aTime);
+  const bP = parseBirth(bBirth, bTime);
+
   const payload = {
     action:    'synergy_report',
     report_id: reportId,
     bzr_uid:   localStorage.getItem('bzr_uid') || '',
     context:   window.currentContext,
     user_a: {
-      name:  aName,
-      birth: aBirth + (aTime ? ' ' + aTime : ' 00:00'),
-      lat:   aCoords.lat,
-      lon:   aCoords.lng,
+      name:      aName,
+      year:      aP.year,
+      month:     aP.month,
+      date:      aP.date,
+      hours:     aP.hours,
+      minutes:   aP.minutes,
+      latitude:  aCoords.lat,
+      longitude: aCoords.lng,
     },
     user_b: {
-      name:  bName,
-      birth: bBirth + (bTime ? ' ' + bTime : ' 00:00'),
-      lat:   bCoords.lat,
-      lon:   bCoords.lng,
+      name:      bName,
+      year:      bP.year,
+      month:     bP.month,
+      date:      bP.date,
+      hours:     bP.hours,
+      minutes:   bP.minutes,
+      latitude:  bCoords.lat,
+      longitude: bCoords.lng,
     },
   };
 
