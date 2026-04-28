@@ -765,14 +765,30 @@ async function openDetail(report) {
 
     let fullContent = '';
     try {
+      // 먼저 그대로 파싱 시도
       const p = JSON.parse(rawText);
       const parsed = typeof p === 'string' ? JSON.parse(p) : p;
       fullContent = parsed.full_content || parsed.content || parsed.report || '';
-      console.log('[BZR] JSON parsed OK, full_content length:', fullContent.length);
+      console.log('[BZR] JSON parsed OK, length:', fullContent.length);
     } catch(e) {
-      // JSON 파싱 실패 → rawText 자체가 본문일 수 있음
-      console.log('[BZR] JSON parse failed, using rawText as content');
-      fullContent = rawText.trim();
+      // JSON 안의 실제 줄바꿈을 \n 으로 치환 후 재파싱
+      // Make.com 이 full_content 안 줄바꿈을 이스케이프하지 않고 보낼 때
+      try {
+        const fixed = rawText.replace(/\n/g, '\\n').replace(/\r/g, '');
+        const p2 = JSON.parse(fixed);
+        const parsed2 = typeof p2 === 'string' ? JSON.parse(p2) : p2;
+        fullContent = parsed2.full_content || parsed2.content || parsed2.report || '';
+        console.log('[BZR] fixed JSON parsed OK, length:', fullContent.length);
+      } catch(e2) {
+        // 최후 수단: 정규식으로 full_content 값만 추출
+        const match = rawText.match(/"full_content"\s*:\s*"([\s\S]*?)(?:",|"\s*\})/);
+        if (match) {
+          fullContent = match[1].replace(/\\n/g, '\n');
+          console.log('[BZR] regex extracted, length:', fullContent.length);
+        } else {
+          console.log('[BZR] all parse failed');
+        }
+      }
     }
 
     console.log('[BZR] fullContent final length:', fullContent.length);
