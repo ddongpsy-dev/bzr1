@@ -225,12 +225,13 @@
 <script type="module">
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
+         browserLocalPersistence, setPersistence }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",
-  authDomain:        "bzr.co.kr",  // 커스텀 도메인으로 iOS ITP 우회
+  authDomain:        "bzr-proj.firebaseapp.com",
   projectId:         "bzr-proj",
   storageBucket:     "bzr-proj.firebasestorage.app",
   messagingSenderId: "130300251259",
