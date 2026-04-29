@@ -902,6 +902,18 @@ footer {
 .footer-link:hover { color: var(--cyan); }
 .footer-link::before { content: '↗'; font-size: 9px; }
 
+.footer-biz {
+  padding: 14px clamp(20px,5vw,80px);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.footer-biz-inner {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--mute-3); line-height: 2;
+  letter-spacing: 0.04em;
+}
+.footer-biz-inner span { margin-right: 16px; }
+
 .footer-bottom {
   padding: 16px clamp(20px,5vw,80px);
   display: flex; justify-content: space-between; align-items: center;
@@ -1309,8 +1321,21 @@ footer {
 
   </div>
 
+  <!-- 사업자 정보 -->
+  <div class="footer-biz">
+    <div class="footer-biz-inner">
+      <span>상호: 별자리연구소</span>
+      <span>대표자: 양동조</span>
+      <span>사업자등록번호: 730-01-04104</span><br>
+      <span>사업장: 서울특별시 강남구 도곡로84길 6, 지하1층 22,66호(대치동)</span>
+      <span>업종: 전자상거래 소매업</span><br>
+      <span>통신판매업 신고번호: 신고 후 기재 예정</span>
+      <span>이메일: contact@bzr.kr</span>
+    </div>
+  </div>
+
   <div class="footer-bottom">
-    <span class="footer-copy">© 2025 BZR ALL RIGHTS RESERVED</span>
+    <span class="footer-copy">© 2026 BZR · 별자리연구소 ALL RIGHTS RESERVED</span>
     <span class="footer-engine">ENGINE v1.0 / KERNEL ACTIVE</span>
   </div>
 </footer>
@@ -2157,7 +2182,7 @@ import { getAuth, onAuthStateChanged, signOut }
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBl_yRpX6zQMdv-JABokRfIgUu35bGZsoI",
-  authDomain:        "bzr-proj.firebaseapp.com",
+  authDomain:        "bzr.co.kr",
   projectId:         "bzr-proj",
   storageBucket:     "bzr-proj.firebasestorage.app",
   messagingSenderId: "130300251259",
