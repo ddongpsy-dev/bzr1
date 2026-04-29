@@ -262,18 +262,17 @@ function hideError() { errorMsg.classList.remove('show'); }
 const LOGIN_WEBHOOK = 'https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae';
 
 async function sendDataToWebhook(user) {
+  // 체크박스가 DOM에 있으면 실시간으로 읽고, 없으면 localStorage 값 사용
   const consentEl        = document.getElementById('consentCheck');
-  const marketingConsent = consentEl ? consentEl.checked : false;
+  const marketingConsent = consentEl
+    ? consentEl.checked
+    : localStorage.getItem('bzr_marketing') === 'true';
   localStorage.setItem('bzr_marketing', marketingConsent ? 'true' : 'false');
 
-  // ★ bzr_uid 를 payload 에 포함하지 않음
-  // Make.com 에서 google_uid 로 시트를 검색 →
-  //   기존 유저: 시트의 bzr_uid 반환
-  //   신규 유저: 새 bzr_uid 생성 후 등록하고 반환
   const payload = {
     google_uid:        user.uid,
-    email:             user.email,
-    display_name:      user.displayName,
+    email:             user.email        || '',
+    display_name:      user.displayName  || '',
     marketing_consent: marketingConsent,
   };
 
