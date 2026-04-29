@@ -272,12 +272,14 @@ async function sendDataToWebhook(user) {
   // user 정보가 완전히 로드됐는지 확인 후 전송
   try { await user.reload(); } catch(e) { /* 무시 */ }
 
-  // providerData에서 구글 프로필 직접 추출 (더 안정적)
-  const googleProvider = user.providerData.find(p => p.providerId === 'google.com');
-  const email       = user.email        || googleProvider?.email       || '';
-  const displayName = user.displayName  || googleProvider?.displayName || '';
+  // 유저 정보 추출 — 우선순위: user 직접값 > providerData > localStorage 저장값
+  const googleProvider = user.providerData?.find(p => p.providerId === 'google.com');
+  const email       = user.email        || googleProvider?.email
+                   || localStorage.getItem('bzr_email')        || '';
+  const displayName = user.displayName  || googleProvider?.displayName
+                   || localStorage.getItem('bzr_display_name') || '';
 
-  // localStorage에도 저장 (재시도 시 사용)
+  // localStorage 갱신
   if (email)       localStorage.setItem('bzr_email',        email);
   if (displayName) localStorage.setItem('bzr_display_name', displayName);
 
@@ -383,6 +385,23 @@ btnLogin.addEventListener('click', async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user   = result.user;
+
+    // ★ signInWithPopup 결과에서 직접 추출 — 가장 확실한 시점
+    // result.user 는 providerData 포함 완전한 상태가 보장됨
+    const googleProvider = result.user.providerData.find(p => p.providerId === 'google.com');
+    const freshEmail       = result.user.email        || googleProvider?.email       || '';
+    const freshDisplayName = result.user.displayName  || googleProvider?.displayName || '';
+
+    // localStorage에 즉시 저장 (재시도 시 활용)
+    if (freshEmail)       localStorage.setItem('bzr_email',        freshEmail);
+    if (freshDisplayName) localStorage.setItem('bzr_display_name', freshDisplayName);
+    localStorage.setItem('bzr_google_uid', result.user.uid);
+
+    console.log('[BZR] signInWithPopup 직후 유저정보:', {
+      uid:         result.user.uid,
+      email:       freshEmail,
+      displayName: freshDisplayName,
+    });
 
     btnTxt.textContent = '데이터 전송 중...';
 
