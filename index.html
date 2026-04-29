@@ -225,7 +225,7 @@
 <script type="module">
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -339,22 +339,26 @@ let loginInProgress = false;
 // ── 1. 세션 체크 ────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    // loginInProgress = true 이면 버튼 클릭 흐름이 제어 중 → 무시
+    // loginInProgress = true 이면 버튼 클릭(PC) 흐름이 제어 중 → 무시
     if (loginInProgress) return;
 
-    // 기존 세션 or 모바일 리다이렉트 복귀
-    // bzr_uid 없으면 웹훅 재호출 (최대 3회 재시도)
+    // 모바일 리다이렉트 복귀 or 기존 세션
+    // user 정보가 완전히 로드될 때까지 잠시 대기
+    await new Promise(r => setTimeout(r, 500));
+    try { await user.reload(); } catch(e) {}
+
+    // bzr_uid 없으면 웹훅 전송 (최대 3회 재시도)
     if (!localStorage.getItem('bzr_uid')) {
       let retries = 3;
       while (retries-- > 0) {
         try {
           await sendDataToWebhook(user);
-          if (localStorage.getItem('bzr_uid')) break; // 성공 시 종료
-          console.warn('[BZR] bzr_uid still missing, retrying...', retries);
-          await new Promise(r => setTimeout(r, 1000)); // 1초 대기 후 재시도
+          if (localStorage.getItem('bzr_uid')) break;
+          console.warn('[BZR] bzr_uid missing, retrying...', retries);
+          await new Promise(r => setTimeout(r, 1500));
         } catch(e) {
-          console.error('[BZR] Session webhook error:', e);
-          await new Promise(r => setTimeout(r, 1000));
+          console.error('[BZR] webhook error:', e);
+          await new Promise(r => setTimeout(r, 1500));
         }
       }
     }
@@ -386,9 +390,8 @@ btnLogin.addEventListener('click', async () => {
   try {
     let user;
     if (isMobile) {
-      // 모바일: 리다이렉트 방식 (팝업 차단 우회)
       await signInWithRedirect(auth, provider);
-      return; // 리다이렉트 후 getRedirectResult 에서 처리
+      return; // 리다이렉트 후 onAuthStateChanged 에서 처리
     } else {
       const result = await signInWithPopup(auth, provider);
       user = result.user;
