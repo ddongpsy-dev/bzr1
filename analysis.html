@@ -1837,8 +1837,11 @@ async function submitToAPI() {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            google_uid: googleUid,
+            google_uid:        googleUid,
+            email:             localStorage.getItem('bzr_email')        || '',
+            display_name:      localStorage.getItem('bzr_display_name') || '',
             marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
+            bzr_uid:           localStorage.getItem('bzr_uid')          || '',
           }),
         });
         const raw  = await res.text();
