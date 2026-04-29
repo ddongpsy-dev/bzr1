@@ -384,23 +384,35 @@ btnLogin.addEventListener('click', async () => {
 
   try {
     const result = await signInWithPopup(auth, provider);
-    const user   = result.user;
 
-    // ★ signInWithPopup 결과에서 직접 추출 — 가장 확실한 시점
-    // result.user 는 providerData 포함 완전한 상태가 보장됨
-    const googleProvider = result.user.providerData.find(p => p.providerId === 'google.com');
-    const freshEmail       = result.user.email        || googleProvider?.email       || '';
-    const freshDisplayName = result.user.displayName  || googleProvider?.displayName || '';
+    // result.user 가 완전히 채워질 때까지 대기
+    let user = result.user;
+    if (!user || !user.uid) {
+      // 혹시 user가 없으면 auth.currentUser로 폴백
+      await new Promise(r => setTimeout(r, 800));
+      user = auth.currentUser;
+      if (user) await user.reload();
+    }
 
-    // localStorage에 즉시 저장 (재시도 시 활용)
+    if (!user || !user.uid) {
+      throw new Error('유저 정보를 가져올 수 없습니다. 다시 시도해주세요.');
+    }
+
+    // 구글 프로바이더에서 직접 추출
+    const googleProvider   = user.providerData?.find(p => p.providerId === 'google.com');
+    const freshEmail       = user.email       || googleProvider?.email       || '';
+    const freshDisplayName = user.displayName || googleProvider?.displayName || '';
+
+    // localStorage에 즉시 저장
+    localStorage.setItem('bzr_google_uid',  user.uid);
     if (freshEmail)       localStorage.setItem('bzr_email',        freshEmail);
     if (freshDisplayName) localStorage.setItem('bzr_display_name', freshDisplayName);
-    localStorage.setItem('bzr_google_uid', result.user.uid);
 
-    console.log('[BZR] signInWithPopup 직후 유저정보:', {
-      uid:         result.user.uid,
+    console.log('[BZR] 유저정보:', {
+      uid:         user.uid,
       email:       freshEmail,
       displayName: freshDisplayName,
+      providerData: user.providerData,
     });
 
     btnTxt.textContent = '데이터 전송 중...';
