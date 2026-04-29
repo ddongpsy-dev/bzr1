@@ -340,24 +340,19 @@ onAuthStateChanged(auth, async (user) => {
     // loginInProgress = true 이면 버튼 클릭(PC) 흐름이 제어 중 → 무시
     if (loginInProgress) return;
 
-    // 모바일 리다이렉트 복귀 or 기존 세션
-    // user 정보가 완전히 로드될 때까지 잠시 대기
-    await new Promise(r => setTimeout(r, 500));
-    try { await user.reload(); } catch(e) {}
-
-    // bzr_uid 없으면 웹훅 전송 (최대 3회 재시도)
-    if (!localStorage.getItem('bzr_uid')) {
-      let retries = 3;
-      while (retries-- > 0) {
-        try {
-          await sendDataToWebhook(user);
-          if (localStorage.getItem('bzr_uid')) break;
-          console.warn('[BZR] bzr_uid missing, retrying...', retries);
-          await new Promise(r => setTimeout(r, 1500));
-        } catch(e) {
-          console.error('[BZR] webhook error:', e);
-          await new Promise(r => setTimeout(r, 1500));
-        }
+    // 기존 세션 or 신규 로그인 — bzr_uid 무조건 확보 후 이동
+    // 최대 3회 재시도, 성공할 때까지 dashboard 이동 안 함
+    let retries = 3;
+    while (retries-- > 0) {
+      try {
+        await user.reload(); // 유저 정보 최신화
+        await sendDataToWebhook(user);
+        if (localStorage.getItem('bzr_uid')) break; // 성공
+        console.warn('[BZR] bzr_uid still missing, retrying...', retries);
+        await new Promise(r => setTimeout(r, 1000));
+      } catch(e) {
+        console.error('[BZR] webhook error:', e);
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
     window.location.replace('./dashboard.html');
@@ -391,10 +386,20 @@ btnLogin.addEventListener('click', async () => {
 
     btnTxt.textContent = '데이터 전송 중...';
 
-    // 웹훅 전송 (200 OK 대기)
-    await sendDataToWebhook(user);
+    // 웹훅 전송 — bzr_uid 확보할 때까지 최대 3회 재시도
+    let retries = 3;
+    while (retries-- > 0) {
+      try {
+        await sendDataToWebhook(user);
+        if (localStorage.getItem('bzr_uid')) break; // 성공
+        console.warn('[BZR] bzr_uid missing after webhook, retrying...', retries);
+        await new Promise(r => setTimeout(r, 1000));
+      } catch(e) {
+        console.error('[BZR] webhook error:', e);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
 
-    // 전송 완료 후 이동 (플래그는 페이지가 바뀌므로 자동 소멸)
     window.location.replace('./dashboard.html');
 
   } catch (err) {
