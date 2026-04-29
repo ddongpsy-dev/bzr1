@@ -269,10 +269,22 @@ async function sendDataToWebhook(user) {
     : localStorage.getItem('bzr_marketing') === 'true';
   localStorage.setItem('bzr_marketing', marketingConsent ? 'true' : 'false');
 
+  // user 정보가 완전히 로드됐는지 확인 후 전송
+  try { await user.reload(); } catch(e) { /* 무시 */ }
+
+  // providerData에서 구글 프로필 직접 추출 (더 안정적)
+  const googleProvider = user.providerData.find(p => p.providerId === 'google.com');
+  const email       = user.email        || googleProvider?.email       || '';
+  const displayName = user.displayName  || googleProvider?.displayName || '';
+
+  // localStorage에도 저장 (재시도 시 사용)
+  if (email)       localStorage.setItem('bzr_email',        email);
+  if (displayName) localStorage.setItem('bzr_display_name', displayName);
+
   const payload = {
     google_uid:        user.uid,
-    email:             user.email        || '',
-    display_name:      user.displayName  || '',
+    email:             email,
+    display_name:      displayName,
     marketing_consent: marketingConsent,
   };
 
