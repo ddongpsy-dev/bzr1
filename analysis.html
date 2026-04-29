@@ -1827,31 +1827,29 @@ function showOnly(el) {
 // 13. SUBMIT
 // ═══════════════════════════════════════════════════════════════════
 async function submitToAPI() {
-  // bzr_uid 없으면 로그인 웹훅 재호출해서 복원
+  // 3단계 방어막: 그래도 bzr_uid 없으면 여기서 마지막으로 복원 시도
   if (!localStorage.getItem('bzr_uid')) {
     const googleUid = localStorage.getItem('bzr_google_uid') || '';
     if (googleUid) {
-      console.log('[BZR] bzr_uid missing, re-fetching...');
+      console.log('[BZR] ★ 3단계 복원 시도...');
       try {
         const res = await fetch('https://hook.us2.make.com/nguw8u44w84j30qgabcxe7pe2vkaquae', {
-          method: 'POST',
+          method:  'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             google_uid:        googleUid,
             email:             localStorage.getItem('bzr_email')        || '',
             display_name:      localStorage.getItem('bzr_display_name') || '',
             marketing_consent: localStorage.getItem('bzr_marketing') === 'true',
-            bzr_uid:           localStorage.getItem('bzr_uid')          || '',
           }),
         });
-        const raw  = await res.text();
-        const data = JSON.parse(raw);
+        const data = JSON.parse(await res.text());
         if (data.bzr_uid) {
           localStorage.setItem('bzr_uid', data.bzr_uid);
-          console.log('[BZR] bzr_uid restored:', data.bzr_uid);
+          console.log('[BZR] ★ 3단계 복원 성공:', data.bzr_uid);
         }
       } catch(e) {
-        console.error('[BZR] bzr_uid restore error:', e);
+        console.error('[BZR] 3단계 복원 실패:', e);
       }
     }
   }
